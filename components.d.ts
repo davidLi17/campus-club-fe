@@ -12,6 +12,10 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    ChartsCalendarHeatmap: typeof import('./src/components/charts/CalendarHeatmap.vue')['default']
+    ChartsFunnelChart: typeof import('./src/components/charts/FunnelChart.vue')['default']
+    ChartsGaugeChart: typeof import('./src/components/charts/GaugeChart.vue')['default']
+    ChartsRadarChart: typeof import('./src/components/charts/RadarChart.vue')['default']
     ElAside: typeof import('element-plus/es')['ElAside']
     ElAvatar: typeof import('element-plus/es')['ElAvatar']
     ElBreadcrumb: typeof import('element-plus/es')['ElBreadcrumb']
@@ -57,6 +61,10 @@ declare module 'vue' {
 
 // For TSX support
 declare global {
+  const ChartsCalendarHeatmap: typeof import('./src/components/charts/CalendarHeatmap.vue')['default']
+  const ChartsFunnelChart: typeof import('./src/components/charts/FunnelChart.vue')['default']
+  const ChartsGaugeChart: typeof import('./src/components/charts/GaugeChart.vue')['default']
+  const ChartsRadarChart: typeof import('./src/components/charts/RadarChart.vue')['default']
   const ElAside: typeof import('element-plus/es')['ElAside']
   const ElAvatar: typeof import('element-plus/es')['ElAvatar']
   const ElBreadcrumb: typeof import('element-plus/es')['ElBreadcrumb']

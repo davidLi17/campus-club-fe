@@ -12,6 +12,7 @@ pids
 *.pid
 *.seed
 *.pid.lock
+.spec-workflow
 
 # Coverage directory used by tools like istanbul
 coverage
