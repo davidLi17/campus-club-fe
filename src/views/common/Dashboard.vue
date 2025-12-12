@@ -1,3 +1,88 @@
+<script setup>
+import { ref, computed, onMounted, onUnmounted } from "vue";
+import { useRouter } from "vue-router";
+import { useUserStore } from "@/stores/user";
+import dayjs from "dayjs";
+import * as echarts from "echarts";
+import CalendarHeatmap from "@/components/charts/CalendarHeatmap.vue";
+import RadarChart from "@/components/charts/RadarChart.vue";
+import FunnelChart from "@/components/charts/FunnelChart.vue";
+import GaugeChart from "@/components/charts/GaugeChart.vue";
+import { useDashboardData } from "@/composables/useDashboardData";
+import {
+  getLineChartOption,
+  getPieChartOption,
+} from "@/composables/useChartConfig";
+
+const router = useRouter();
+const userStore = useUserStore();
+
+// 使用外部数据
+const {
+  stats,
+  mockActivities,
+  mockClubs,
+  mockApplications,
+  gaugeData,
+  loadStats,
+} = useDashboardData();
+
+// 图表相关
+const lineChartRef = ref(null);
+const pieChartRef = ref(null);
+let lineChart = null;
+let pieChart = null;
+
+// 计算属性
+const currentDate = computed(() => {
+  return dayjs().format("YYYY年MM月DD日 dddd");
+});
+
+const greeting = computed(() => {
+  const hour = new Date().getHours();
+  if (hour < 12) return "早上好";
+  if (hour < 18) return "下午好";
+  return "晚上好";
+});
+
+// 生命周期
+onMounted(() => {
+  loadStats();
+  initCharts();
+  window.addEventListener("resize", handleResize);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("resize", handleResize);
+  if (lineChart) lineChart.dispose();
+  if (pieChart) pieChart.dispose();
+});
+
+// 事件处理
+const handleResize = () => {
+  if (lineChart) lineChart.resize();
+  if (pieChart) pieChart.resize();
+};
+
+// 图表初始化
+const initCharts = () => {
+  initLineChart();
+  initPieChart();
+};
+
+const initLineChart = () => {
+  if (!lineChartRef.value) return;
+  lineChart = echarts.init(lineChartRef.value);
+  lineChart.setOption(getLineChartOption());
+};
+
+const initPieChart = () => {
+  if (!pieChartRef.value) return;
+  pieChart = echarts.init(pieChartRef.value);
+  pieChart.setOption(getPieChartOption());
+};
+</script>
+
 <template>
   <div class="dashboard">
     <el-row :gutter="20" class="welcome-row">
@@ -61,25 +146,54 @@
     </el-row>
 
     <!-- 图表区域 -->
+    <!-- 日历热力图 -->
+    <el-row :gutter="20" class="charts-row">
+      <el-col :span="24">
+        <el-card class="chart-card">
+          <CalendarHeatmap :activities="mockActivities" />
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <!-- 雷达图和漏斗图 -->
     <el-row :gutter="20" class="charts-row">
       <el-col :span="12">
+        <el-card class="chart-card">
+          <RadarChart :clubs="mockClubs" />
+        </el-card>
+      </el-col>
+      <el-col :span="12">
+        <el-card class="chart-card">
+          <FunnelChart :applications="mockApplications" />
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <!-- 仪表盘和原有图表 -->
+    <el-row :gutter="20" class="charts-row">
+      <el-col :span="8">
+        <el-card class="chart-card">
+          <GaugeChart :activity-data="gaugeData" />
+        </el-card>
+      </el-col>
+      <el-col :span="8">
         <el-card class="chart-card">
           <template #header>
             <div class="card-header">
               <span>📈 社团活动趋势</span>
             </div>
           </template>
-          <div ref="lineChartRef" style="width: 100%; height: 320px"></div>
+          <div ref="lineChartRef" style="width: 100%; height: 280px"></div>
         </el-card>
       </el-col>
-      <el-col :span="12">
+      <el-col :span="8">
         <el-card class="chart-card">
           <template #header>
             <div class="card-header">
               <span>🎯 社团类型分布</span>
             </div>
           </template>
-          <div ref="pieChartRef" style="width: 100%; height: 320px"></div>
+          <div ref="pieChartRef" style="width: 100%; height: 280px"></div>
         </el-card>
       </el-col>
     </el-row>
@@ -140,309 +254,6 @@
   </div>
 </template>
 
-<script setup>
-import { ref, computed, onMounted, onUnmounted } from "vue";
-import { useRouter } from "vue-router";
-import { useUserStore } from "@/stores/user";
-import dayjs from "dayjs";
-import * as echarts from "echarts";
-
-const router = useRouter();
-const userStore = useUserStore();
-
-const stats = ref({
-  totalClubs: 0,
-  totalActivities: 0,
-  pendingApprovals: 0,
-});
-
-const lineChartRef = ref(null);
-const pieChartRef = ref(null);
-let lineChart = null;
-let pieChart = null;
-
-const currentDate = computed(() => {
-  return dayjs().format("YYYY年MM月DD日 dddd");
-});
-
-const greeting = computed(() => {
-  const hour = new Date().getHours();
-  if (hour < 12) return "早上好";
-  if (hour < 18) return "下午好";
-  return "晚上好";
-});
-
-onMounted(() => {
-  loadStats();
-  initCharts();
-
-  // 监听窗口大小变化
-  window.addEventListener("resize", handleResize);
-});
-
-onUnmounted(() => {
-  window.removeEventListener("resize", handleResize);
-  if (lineChart) lineChart.dispose();
-  if (pieChart) pieChart.dispose();
-});
-
-const handleResize = () => {
-  if (lineChart) lineChart.resize();
-  if (pieChart) pieChart.resize();
-};
-
-// Mock数据加载
-const loadStats = () => {
-  stats.value = {
-    totalClubs: 12,
-    totalActivities: 45,
-    pendingApprovals: 8,
-  };
-};
-
-// 初始化图表
-const initCharts = () => {
-  initLineChart();
-  initPieChart();
-};
-
-// 折线图 - 活动趋势
-const initLineChart = () => {
-  if (!lineChartRef.value) return;
-
-  lineChart = echarts.init(lineChartRef.value);
-
-  const option = {
-    tooltip: {
-      trigger: "axis",
-      backgroundColor: "rgba(255, 255, 255, 0.95)",
-      borderColor: "#e2e8f0",
-      borderWidth: 1,
-      textStyle: {
-        color: "#1e293b",
-        fontSize: 13,
-      },
-      padding: 12,
-      extraCssText:
-        "border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);",
-    },
-    legend: {
-      data: ["活动数量", "参与人数"],
-      top: 10,
-      textStyle: {
-        color: "#64748b",
-        fontSize: 13,
-        fontWeight: 500,
-      },
-    },
-    grid: {
-      left: "3%",
-      right: "4%",
-      bottom: "3%",
-      top: "18%",
-      containLabel: true,
-    },
-    xAxis: {
-      type: "category",
-      boundaryGap: false,
-      data: ["1月", "2月", "3月", "4月", "5月", "6月"],
-      axisLine: {
-        lineStyle: {
-          color: "#e2e8f0",
-        },
-      },
-      axisLabel: {
-        color: "#64748b",
-        fontSize: 12,
-        fontWeight: 500,
-      },
-    },
-    yAxis: {
-      type: "value",
-      splitLine: {
-        lineStyle: {
-          color: "#f1f5f9",
-          type: "dashed",
-        },
-      },
-      axisLabel: {
-        color: "#64748b",
-        fontSize: 12,
-      },
-    },
-    series: [
-      {
-        name: "活动数量",
-        type: "line",
-        smooth: true,
-        symbol: "circle",
-        symbolSize: 8,
-        data: [5, 8, 12, 15, 18, 20],
-        itemStyle: {
-          color: "#667eea",
-          borderWidth: 2,
-          borderColor: "#ffffff",
-        },
-        lineStyle: {
-          width: 3,
-          color: {
-            type: "linear",
-            x: 0,
-            y: 0,
-            x2: 1,
-            y2: 0,
-            colorStops: [
-              { offset: 0, color: "#667eea" },
-              { offset: 1, color: "#764ba2" },
-            ],
-          },
-        },
-        areaStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: "rgba(102, 126, 234, 0.35)" },
-            { offset: 1, color: "rgba(102, 126, 234, 0.02)" },
-          ]),
-        },
-        emphasis: {
-          itemStyle: {
-            scale: 1.5,
-            shadowBlur: 10,
-            shadowColor: "rgba(102, 126, 234, 0.5)",
-          },
-        },
-      },
-      {
-        name: "参与人数",
-        type: "line",
-        smooth: true,
-        symbol: "circle",
-        symbolSize: 8,
-        data: [120, 180, 250, 320, 380, 450],
-        itemStyle: {
-          color: "#48bb78",
-          borderWidth: 2,
-          borderColor: "#ffffff",
-        },
-        lineStyle: {
-          width: 3,
-          color: {
-            type: "linear",
-            x: 0,
-            y: 0,
-            x2: 1,
-            y2: 0,
-            colorStops: [
-              { offset: 0, color: "#48bb78" },
-              { offset: 1, color: "#38a169" },
-            ],
-          },
-        },
-        areaStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: "rgba(72, 187, 120, 0.35)" },
-            { offset: 1, color: "rgba(72, 187, 120, 0.02)" },
-          ]),
-        },
-        emphasis: {
-          itemStyle: {
-            scale: 1.5,
-            shadowBlur: 10,
-            shadowColor: "rgba(72, 187, 120, 0.5)",
-          },
-        },
-      },
-    ],
-  };
-
-  lineChart.setOption(option);
-};
-
-// 饼图 - 社团类型分布
-const initPieChart = () => {
-  if (!pieChartRef.value) return;
-
-  pieChart = echarts.init(pieChartRef.value);
-
-  const option = {
-    tooltip: {
-      trigger: "item",
-      formatter: "{a} <br/>{b}: {c}个 ({d}%)",
-      backgroundColor: "rgba(255, 255, 255, 0.95)",
-      borderColor: "#e2e8f0",
-      borderWidth: 1,
-      textStyle: {
-        color: "#1e293b",
-        fontSize: 13,
-      },
-      padding: 12,
-      extraCssText:
-        "border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);",
-    },
-    legend: {
-      orient: "vertical",
-      right: "8%",
-      top: "center",
-      itemGap: 16,
-      textStyle: {
-        color: "#64748b",
-        fontSize: 13,
-        fontWeight: 500,
-      },
-      icon: "circle",
-      itemWidth: 12,
-      itemHeight: 12,
-    },
-    series: [
-      {
-        name: "社团类型",
-        type: "pie",
-        radius: ["45%", "75%"],
-        center: ["35%", "50%"],
-        avoidLabelOverlap: false,
-        itemStyle: {
-          borderRadius: 12,
-          borderColor: "#fff",
-          borderWidth: 3,
-          shadowBlur: 8,
-          shadowColor: "rgba(0, 0, 0, 0.1)",
-        },
-        label: {
-          show: false,
-          position: "center",
-        },
-        emphasis: {
-          label: {
-            show: true,
-            fontSize: 22,
-            fontWeight: "bold",
-            color: "#1e293b",
-          },
-          itemStyle: {
-            shadowBlur: 15,
-            shadowOffsetX: 0,
-            shadowColor: "rgba(0, 0, 0, 0.2)",
-          },
-          scale: true,
-          scaleSize: 8,
-        },
-        labelLine: {
-          show: false,
-        },
-        data: [
-          { value: 4, name: "学术科技类", itemStyle: { color: "#667eea" } },
-          { value: 3, name: "文化艺术类", itemStyle: { color: "#48bb78" } },
-          { value: 2, name: "体育健身类", itemStyle: { color: "#ed8936" } },
-          { value: 2, name: "志愿服务类", itemStyle: { color: "#f687b3" } },
-          { value: 1, name: "其他类型", itemStyle: { color: "#a0aec0" } },
-        ],
-      },
-    ],
-  };
-
-  pieChart.setOption(option);
-};
-</script>
-
 <style scoped lang="scss">
 .dashboard {
   .welcome-row {
@@ -459,6 +270,10 @@ const initPieChart = () => {
 
     .el-col:nth-child(2) {
       animation: fadeInUp 0.7s ease-out;
+    }
+
+    .el-col:nth-child(3) {
+      animation: fadeInUp 0.8s ease-out;
     }
   }
 
