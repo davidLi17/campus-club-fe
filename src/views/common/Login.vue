@@ -1,62 +1,3 @@
-<template>
-  <div class="login-container">
-    <el-card class="login-card">
-      <template #header>
-        <div class="card-header">
-          <h2>校园社团管理系统</h2>
-          <p class="subtitle">管理端登录</p>
-        </div>
-      </template>
-
-      <el-form
-        ref="loginFormRef"
-        :model="loginForm"
-        :rules="loginRules"
-        class="login-form"
-        @keyup.enter="handleLogin"
-      >
-        <el-form-item prop="username">
-          <el-input
-            v-model="loginForm.username"
-            placeholder="请输入用户名"
-            size="large"
-            prefix-icon="User"
-          />
-        </el-form-item>
-
-        <el-form-item prop="password">
-          <el-input
-            v-model="loginForm.password"
-            type="password"
-            placeholder="请输入密码"
-            size="large"
-            prefix-icon="Lock"
-            show-password
-          />
-        </el-form-item>
-
-        <el-form-item>
-          <el-button
-            type="primary"
-            size="large"
-            :loading="loading"
-            class="login-button"
-            @click="handleLogin"
-          >
-            登录
-          </el-button>
-        </el-form-item>
-      </el-form>
-
-      <div class="tips">
-        <p>测试账号：</p>
-        <p>系统管理员: admin / 123456</p>
-        <p>社团管理员: clubadmin / 123456</p>
-      </div>
-    </el-card>
-  </div>
-</template>
-
 <script setup>
 import { ref, reactive } from "vue";
 import { useRouter } from "vue-router";
@@ -134,6 +75,64 @@ const mockLogin = () => {
   });
 };
 </script>
+<template>
+  <div class="login-container">
+    <el-card class="login-card">
+      <template #header>
+        <div class="card-header">
+          <h2>校园社团管理系统</h2>
+          <p class="subtitle">管理端登录</p>
+        </div>
+      </template>
+
+      <el-form
+        ref="loginFormRef"
+        :model="loginForm"
+        :rules="loginRules"
+        class="login-form"
+        @keyup.enter="handleLogin"
+      >
+        <el-form-item prop="username">
+          <el-input
+            v-model="loginForm.username"
+            placeholder="请输入用户名"
+            size="large"
+            prefix-icon="User"
+          />
+        </el-form-item>
+
+        <el-form-item prop="password">
+          <el-input
+            v-model="loginForm.password"
+            type="password"
+            placeholder="请输入密码"
+            size="large"
+            prefix-icon="Lock"
+            show-password
+          />
+        </el-form-item>
+
+        <el-form-item>
+          <el-button
+            type="primary"
+            size="large"
+            :loading="loading"
+            class="login-button"
+            @click="handleLogin"
+          >
+            登录
+          </el-button>
+        </el-form-item>
+      </el-form>
+
+      <div class="tips">
+        <p>测试账号：</p>
+        <p>系统管理员: admin / 123456</p>
+        <p>社团管理员: clubadmin / 123456</p>
+      </div>
+    </el-card>
+  </div>
+</template>
 
 <style scoped lang="scss">
 .login-container {

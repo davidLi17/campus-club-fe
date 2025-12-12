@@ -1,3 +1,44 @@
+<script setup>
+import { ref, computed } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { ElMessageBox } from "element-plus";
+import { useUserStore } from "@/stores/user";
+
+const route = useRoute();
+const router = useRouter();
+const userStore = useUserStore();
+
+const collapsed = ref(false);
+
+const activeMenu = computed(() => route.path);
+
+const roleText = computed(() => {
+  const roleMap = {
+    ADMIN: "系统管理员",
+    CLUB_ADMIN: "社团管理员",
+    USER: "普通用户",
+  };
+  return roleMap[userStore.role] || "未知角色";
+});
+
+const handleCommand = async (command) => {
+  if (command === "logout") {
+    try {
+      await ElMessageBox.confirm("确定要退出登录吗？", "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      });
+
+      userStore.logout();
+      router.push("/login");
+    } catch {
+      // 取消操作
+    }
+  }
+};
+</script>
+
 <template>
   <el-container class="layout-container">
     <el-aside :width="collapsed ? '64px' : '220px'" class="layout-aside">
@@ -114,47 +155,6 @@
     </el-container>
   </el-container>
 </template>
-
-<script setup>
-import { ref, computed } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { ElMessageBox } from "element-plus";
-import { useUserStore } from "@/stores/user";
-
-const route = useRoute();
-const router = useRouter();
-const userStore = useUserStore();
-
-const collapsed = ref(false);
-
-const activeMenu = computed(() => route.path);
-
-const roleText = computed(() => {
-  const roleMap = {
-    ADMIN: "系统管理员",
-    CLUB_ADMIN: "社团管理员",
-    USER: "普通用户",
-  };
-  return roleMap[userStore.role] || "未知角色";
-});
-
-const handleCommand = async (command) => {
-  if (command === "logout") {
-    try {
-      await ElMessageBox.confirm("确定要退出登录吗？", "提示", {
-        confirmButtonText: "确定",
-        cancelButtonText: "取消",
-        type: "warning",
-      });
-
-      userStore.logout();
-      router.push("/login");
-    } catch {
-      // 取消操作
-    }
-  }
-};
-</script>
 
 <style scoped lang="scss">
 .layout-container {
