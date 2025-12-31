@@ -1,0 +1,178 @@
+{
+  "timestamp": "2025-12-13T12:04:45.000Z",
+  "project": {
+    "name": "campus-club-fe",
+    "type": "vue3-frontend",
+    "description": "校园社团管理系统前端",
+    "total_files": 41,
+    "scanned_files": 41,
+    "coverage": "100%",
+    "truncated": false
+  },
+  "modules": [
+    {
+      "path": "src/views/common",
+      "name": "公共页面模块",
+      "entry": "Login.vue",
+      "files": ["Login.vue", "Layout.vue", "Dashboard.vue"],
+      "apis": [],
+      "components": [],
+      "tests": [],
+      "config": [],
+      "coverage": {
+        "scanned": 3,
+        "total": 3,
+        "percentage": "100%"
+      }
+    },
+    {
+      "path": "src/views/admin",
+      "name": "系统管理员模块",
+      "entry": "ClubManage.vue",
+      "files": ["ClubManage.vue", "ActivityAudit.vue"],
+      "apis": ["admin.js"],
+      "components": [],
+      "tests": [],
+      "config": [],
+      "coverage": {
+        "scanned": 2,
+        "total": 2,
+        "percentage": "100%"
+      }
+    },
+    {
+      "path": "src/views/club-admin",
+      "name": "社团管理员模块",
+      "entry": "ClubInfo.vue",
+      "files": ["ClubInfo.vue", "MemberManage.vue", "ActivityManage.vue"],
+      "apis": ["clubAdmin.js"],
+      "components": [],
+      "tests": [],
+      "config": [],
+      "coverage": {
+        "scanned": 3,
+        "total": 3,
+        "percentage": "100%"
+      }
+    },
+    {
+      "path": "src/components/charts",
+      "name": "图表组件库",
+      "entry": "RadarChart.vue",
+      "files": ["RadarChart.vue", "GaugeChart.vue", "FunnelChart.vue", "CalendarHeatmap.vue"],
+      "apis": [],
+      "components": [],
+      "tests": [],
+      "config": [],
+      "coverage": {
+        "scanned": 4,
+        "total": 4,
+        "percentage": "100%"
+      }
+    },
+    {
+      "path": "src/api",
+      "name": "API 接口层",
+      "entry": "user.js",
+      "files": ["user.js", "club.js", "activity.js", "admin.js", "clubAdmin.js"],
+      "apis": [],
+      "components": [],
+      "tests": [],
+      "config": ["request.js"],
+      "coverage": {
+        "scanned": 5,
+        "total": 5,
+        "percentage": "100%"
+      }
+    },
+    {
+      "path": "src/stores",
+      "name": "状态管理",
+      "entry": "user.js",
+      "files": ["user.js"],
+      "apis": [],
+      "components": [],
+      "tests": [],
+      "config": [],
+      "coverage": {
+        "scanned": 1,
+        "total": 1,
+        "percentage": "100%"
+      }
+    },
+    {
+      "path": "src/utils",
+      "name": "工具函数",
+      "entry": "auth.js",
+      "files": ["auth.js", "request.js"],
+      "apis": [],
+      "components": [],
+      "tests": [],
+      "config": [],
+      "coverage": {
+        "scanned": 2,
+        "total": 2,
+        "percentage": "100%"
+      }
+    },
+    {
+      "path": "src/styles",
+      "name": "样式系统",
+      "entry": "variables.scss",
+      "files": ["variables.scss", "element-custom.css"],
+      "apis": [],
+      "components": [],
+      "tests": [],
+      "config": ["tailwind.config.js"],
+      "coverage": {
+        "scanned": 2,
+        "total": 2,
+        "percentage": "100%"
+      }
+    }
+  ],
+  "statistics": {
+    "languages": {
+      "Vue": 8,
+      "JavaScript": 17,
+      "SCSS": 1,
+      "CSS": 1,
+      "JSON": 12,
+      "MD": 2
+    },
+    "ignored_directories": [
+      "node_modules",
+      ".git",
+      ".vite",
+      "dist"
+    ],
+    "ignored_files": [],
+    "gaps": [
+      {
+        "module": "All Modules",
+        "missing": "Tests",
+        "impact": "Low code quality assurance",
+        "priority": "Medium"
+      },
+      {
+        "module": "src/api",
+        "missing": "API documentation",
+        "impact": "Poor developer experience",
+        "priority": "Medium"
+      },
+      {
+        "module": "src/components",
+        "missing": "Component documentation",
+        "impact": "Poor reusability",
+        "priority": "Low"
+      }
+    ]
+  },
+  "recommendations": [
+    "Add unit testing framework (Vitest + Vue Test Utils)",
+    "Add component documentation for better reusability",
+    "Consider TypeScript migration for type safety",
+    "Implement API documentation with OpenAPI/Swagger",
+    "Add E2E testing with Cypress or Playwright"
+  ]
+}
