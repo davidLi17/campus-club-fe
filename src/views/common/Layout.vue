@@ -3,6 +3,7 @@ import { ref, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessageBox } from "element-plus";
 import { useUserStore } from "@/stores/user";
+import { getUserRoleText } from "@/utils/statusMap";
 
 const route = useRoute();
 const router = useRouter();
@@ -12,14 +13,7 @@ const collapsed = ref(false);
 
 const activeMenu = computed(() => route.path);
 
-const roleText = computed(() => {
-  const roleMap = {
-    ADMIN: "系统管理员",
-    CLUB_ADMIN: "社团管理员",
-    USER: "普通用户",
-  };
-  return roleMap[userStore.role] || "未知角色";
-});
+const roleText = computed(() => getUserRoleText(userStore.role));
 
 const handleCommand = async (command) => {
   if (command === "logout") {

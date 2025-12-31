@@ -16,11 +16,12 @@ export const useUserStore = defineStore("user", {
     role: (state) => state.userInfo?.role || "",
 
     // 是否是系统管理员
-    isAdmin: (state) => state.userInfo?.role === "ADMIN",
+    isAdmin: (state) => state.userInfo?.role === "system_admin",
 
     // 是否是社团管理员
     isClubAdmin: (state) =>
-      state.userInfo?.role === "CLUB_ADMIN" || state.userInfo?.role === "ADMIN",
+      state.userInfo?.role === "club_admin" ||
+      state.userInfo?.role === "system_admin",
   },
 
   actions: {

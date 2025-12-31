@@ -1,7 +1,12 @@
 <template>
   <div class="club-manage">
     <el-card class="search-card">
-      <el-form :inline="true" :model="searchForm" class="search-form">
+      <el-form
+        :inline="true"
+        :model="searchForm"
+        class="search-form"
+        @submit.prevent="handleSearch"
+      >
         <el-form-item label="关键词">
           <el-input
             v-model="searchForm.keyword"
@@ -17,7 +22,7 @@
           </el-button>
           <el-button @click="handleReset">
             <el-icon><Refresh /></el-icon>
-            重置
+            刷新数据
           </el-button>
           <el-button type="success" @click="handleCreate">
             <el-icon><Plus /></el-icon>
@@ -46,8 +51,8 @@
         <el-table-column prop="memberCount" label="成员数" width="100" />
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="getStatusType(row.status)">
-              {{ getStatusText(row.status) }}
+            <el-tag :type="getClubStatusType(row.status)">
+              {{ getClubStatusText(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -178,6 +183,7 @@ import {
   removeClubLeader,
 } from "@/api/admin";
 import { getClubList, getClubMembers } from "@/api/club";
+import { getClubStatusType, getClubStatusText } from "@/utils/statusMap";
 
 const loading = ref(false);
 const tableData = ref([]);
@@ -223,15 +229,13 @@ onMounted(() => {
 const loadData = async () => {
   loading.value = true;
   try {
-    // TODO: 后端接口通了替换为真实调用
-    await mockLoadData();
-    // const data = await getClubList({
-    //   ...searchForm,
-    //   pageNum: pagination.pageNum,
-    //   pageSize: pagination.pageSize
-    // })
-    // tableData.value = data.records
-    // pagination.total = data.total
+    const data = await getClubList({
+      ...searchForm,
+      pageNum: pagination.pageNum,
+      pageSize: pagination.pageSize,
+    });
+    tableData.value = data.records || [];
+    pagination.total = data.total || 0;
   } catch (error) {
     ElMessage.error("加载数据失败");
   } finally {
@@ -239,113 +243,22 @@ const loadData = async () => {
   }
 };
 
-// Mock数据加载
-const mockLoadData = () => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      tableData.value = [
-        {
-          id: 1,
-          name: "计算机协会",
-          description: "致力于推广计算机技术，提升学生编程能力",
-          logo: "",
-          status: "ACTIVE",
-          createUser: 1,
-          createUsername: "管理员",
-          memberCount: 50,
-          createTime: "2024-01-15 10:00:00",
-        },
-        {
-          id: 2,
-          name: "篮球社",
-          description: "培养篮球爱好者，组织篮球比赛和训练",
-          logo: "",
-          status: "ACTIVE",
-          createUser: 1,
-          createUsername: "管理员",
-          memberCount: 35,
-          createTime: "2024-02-20 14:30:00",
-        },
-        {
-          id: 3,
-          name: "摄影社",
-          description: "分享摄影技巧，记录校园美好瞬间",
-          logo: "",
-          status: "INACTIVE",
-          createUser: 1,
-          createUsername: "管理员",
-          memberCount: 28,
-          createTime: "2024-03-10 09:15:00",
-        },
-      ];
-      pagination.total = 3;
-      resolve();
-    }, 300);
-  });
-};
-
 const loadMembers = async () => {
   if (!currentClub.value) return;
 
   memberLoading.value = true;
   try {
-    // TODO: 后端接口通了替换
-    await mockLoadMembers();
+    const data = await getClubMembers(currentClub.value.id, {
+      pageNum: memberPagination.pageNum,
+      pageSize: memberPagination.pageSize,
+    });
+    memberData.value = data.records || [];
+    memberPagination.total = data.total || 0;
   } catch (error) {
     ElMessage.error("加载成员失败");
   } finally {
     memberLoading.value = false;
   }
-};
-
-const mockLoadMembers = () => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      memberData.value = [
-        {
-          userId: 1,
-          username: "user001",
-          realName: "张三",
-          role: "LEADER",
-          joinTime: "2024-01-15 10:00:00",
-        },
-        {
-          userId: 2,
-          username: "user002",
-          realName: "李四",
-          role: "MEMBER",
-          joinTime: "2024-01-16 11:20:00",
-        },
-        {
-          userId: 3,
-          username: "user003",
-          realName: "王五",
-          role: "MEMBER",
-          joinTime: "2024-01-17 15:30:00",
-        },
-      ];
-      memberPagination.total = 3;
-      resolve();
-    }, 300);
-  });
-};
-
-const getStatusType = (status) => {
-  const map = {
-    ACTIVE: "success",
-    INACTIVE: "info",
-    PENDING: "warning",
-  };
-  return map[status] || "info";
-};
-
-const getStatusText = (status) => {
-  const map = {
-    ACTIVE: "正常",
-    INACTIVE: "停用",
-    PENDING: "待审核",
-  };
-  return map[status] || "未知";
 };
 
 const handleSearch = () => {
@@ -404,9 +317,7 @@ const handleDelete = async (row) => {
       }
     );
 
-    // TODO: 后端接口通了替换
-    // await deleteClub(row.id)
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await deleteClub(row.id);
 
     ElMessage.success("删除成功");
     loadData();
@@ -423,14 +334,11 @@ const handleSubmit = async () => {
 
     submitting.value = true;
 
-    // TODO: 后端接口通了替换
     if (form.id) {
-      // await updateClub(form)
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await updateClub(form);
       ElMessage.success("更新成功");
     } else {
-      // await createClub(form)
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await createClub(form);
       ElMessage.success("创建成功");
     }
 
@@ -459,9 +367,7 @@ const handleSetLeader = async (row) => {
       }
     );
 
-    // TODO: 后端接口通了替换
-    // await setClubLeader(currentClub.value.id, row.userId)
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await setClubLeader(currentClub.value.id, row.userId);
 
     ElMessage.success("设置成功");
     loadMembers();
@@ -484,9 +390,7 @@ const handleRemoveLeader = async (row) => {
       }
     );
 
-    // TODO: 后端接口通了替换
-    // await removeClubLeader(currentClub.value.id, row.userId)
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await removeClubLeader(currentClub.value.id, row.userId);
 
     ElMessage.success("取消成功");
     loadMembers();

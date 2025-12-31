@@ -128,8 +128,8 @@
         <el-table-column prop="signupTime" label="报名时间" width="180" />
         <el-table-column prop="attendStatus" label="签到状态" width="120">
           <template #default="{ row }">
-            <el-tag :type="getAttendType(row.attendStatus)">
-              {{ getAttendText(row.attendStatus) }}
+            <el-tag :type="getAttendanceStatusType(row.attendStatus)">
+              {{ getAttendanceStatusText(row.attendStatus) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -168,6 +168,13 @@ import {
   getActivitySignups,
   checkinActivity,
 } from "@/api/clubAdmin";
+import { getActivityList } from "@/api/activity";
+import {
+  getActivityStatusType,
+  getActivityStatusText,
+  getAttendanceStatusType,
+  getAttendanceStatusText,
+} from "@/utils/statusMap";
 
 const loading = ref(false);
 const tableData = ref([]);
@@ -270,44 +277,6 @@ const loadSignups = async () => {
   } finally {
     signupLoading.value = false;
   }
-};
-
-const getStatusType = (status) => {
-  const map = {
-    PENDING: "warning",
-    APPROVED: "success",
-    REJECTED: "danger",
-    CANCELLED: "info",
-    COMPLETED: "info",
-  };
-  return map[status] || "info";
-};
-
-const getStatusText = (status) => {
-  const map = {
-    PENDING: "待审核",
-    APPROVED: "已通过",
-    REJECTED: "已拒绝",
-    CANCELLED: "已取消",
-    COMPLETED: "已完成",
-  };
-  return map[status] || "未知";
-};
-
-const getAttendType = (status) => {
-  const map = {
-    PRESENT: "success",
-    ABSENT: "danger",
-  };
-  return map[status] || "info";
-};
-
-const getAttendText = (status) => {
-  const map = {
-    PRESENT: "已签到",
-    ABSENT: "缺席",
-  };
-  return map[status] || "未签到";
 };
 
 const handleCreate = () => {

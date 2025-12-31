@@ -30,49 +30,17 @@ const handleLogin = async () => {
 
     loading.value = true;
 
-    // TODO: 后端接口未通，使用Mock数据
-    await mockLogin();
-
-    // 真实接口调用（后端通了之后使用）
-    // await userStore.login(loginForm)
+    // 调用真实登录接口
+    await userStore.login(loginForm);
 
     ElMessage.success("登录成功");
     router.push("/dashboard");
   } catch (error) {
     console.error("登录失败:", error);
+    ElMessage.error(error.message || "登录失败，请检查用户名和密码");
   } finally {
     loading.value = false;
   }
-};
-
-// Mock登录（临时使用）
-const mockLogin = () => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // 模拟不同角色
-      const mockData = {
-        token: "mock_token_" + Date.now(),
-        userInfo: {
-          id: 1,
-          username: loginForm.username,
-          realName:
-            loginForm.username === "admin" ? "系统管理员" : "社团管理员",
-          role: loginForm.username === "admin" ? "ADMIN" : "CLUB_ADMIN",
-          email: loginForm.username + "@campus.com",
-          avatar: "",
-        },
-      };
-
-      // 保存到 store (Pinia 的持久化插件会自动保存到 localStorage)
-      userStore.token = mockData.token;
-      userStore.userInfo = mockData.userInfo;
-
-      // 同时保存到 auth 工具（用于 axios 拦截器）
-      setToken(mockData.token);
-
-      resolve(mockData);
-    }, 500);
-  });
 };
 </script>
 <template>

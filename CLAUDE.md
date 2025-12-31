@@ -74,24 +74,26 @@ graph TD
 
 ## 模块索引
 
-| 模块路径 | 职责描述 | 技术栈 |
-|---------|---------|--------|
-| src/views/common | 公共页面模块 | Vue 3 + Element Plus |
-| src/views/admin | 系统管理员模块 | Vue 3 + Element Plus |
-| src/views/club-admin | 社团管理员模块 | Vue 3 + Element Plus |
-| src/components/charts | 图表组件库 | ECharts + Vue 3 |
-| src/api | API 接口层 | Axios |
-| src/stores | 状态管理 | Pinia |
-| src/utils | 工具函数 | JavaScript |
-| src/styles | 样式系统 | SCSS + Tailwind CSS |
+| 模块路径              | 职责描述       | 技术栈               |
+| --------------------- | -------------- | -------------------- |
+| src/views/common      | 公共页面模块   | Vue 3 + Element Plus |
+| src/views/admin       | 系统管理员模块 | Vue 3 + Element Plus |
+| src/views/club-admin  | 社团管理员模块 | Vue 3 + Element Plus |
+| src/components/charts | 图表组件库     | ECharts + Vue 3      |
+| src/api               | API 接口层     | Axios                |
+| src/stores            | 状态管理       | Pinia                |
+| src/utils             | 工具函数       | JavaScript           |
+| src/styles            | 样式系统       | SCSS + Tailwind CSS  |
 
 ## 运行与开发
 
 ### 环境要求
+
 - Node.js >= 16.0.0
 - npm >= 7.0.0 或 yarn >= 1.22.0
 
 ### 开发命令
+
 ```bash
 # 安装依赖
 npm install
@@ -107,14 +109,8 @@ npm run preview
 ```
 
 ### 开发代理配置
+
 开发环境已配置 API 代理，自动将 `/api` 请求转发到 `http://localhost:8080`
-
-## 测试策略
-
-当前项目尚未配置测试框架。建议后续添加：
-- **单元测试**: Vitest + Vue Test Utils
-- **端到端测试**: Cypress 或 Playwright
-- **组件测试**: Vue Test Utils
 
 ## 编码规范
 
@@ -131,28 +127,3 @@ npm run preview
 3. **样式编写**: 使用 SCSS 预处理器，复用 variables.scss 中的变量
 4. **图表开发**: 基于 ECharts，优先使用 components/charts 中的封装组件
 5. **权限控制**: 路由守卫已实现，新增页面需配置 meta.roles
-
-## 变更记录 (Changelog)
-
-### 2025-12-13 12:04:45
-- 初始化项目文档
-- 完成架构分析
-- 生成模块索引
-- 建立开发规范
-
-## 下一步建议
-
-1. **补充测试框架**: 集成 Vitest 和 Vue Test Utils
-2. **TypeScript 迁移**: 逐步引入 TypeScript 增强类型安全
-3. **性能优化**:
-   - 实现路由懒加载
-   - 组件按需引入
-   - 图片资源优化
-4. **功能扩展**:
-   - 添加实时通知系统
-   - 集成富文本编辑器
-   - 支持文件上传下载
-5. **文档完善**:
-   - 添加 API 文档
-   - 编写组件使用示例
-   - 补充部署指南

@@ -104,12 +104,17 @@ import {
   getClubPendingApplications,
   reviewClubApplication,
 } from "@/api/clubAdmin";
-import { getClubMembers } from "@/api/club";
+import { getClubMembers, getMyClubs } from "@/api/club";
+import {
+  getApplicationStatusType,
+  getApplicationStatusText,
+} from "@/utils/statusMap";
 
 const activeTab = ref("members");
 const loading = ref(false);
 const memberData = ref([]);
 const applicationData = ref([]);
+const currentClubId = ref(null);
 const pagination = reactive({
   pageNum: 1,
   pageSize: 10,
@@ -125,64 +130,57 @@ const reviewForm = reactive({
 });
 const submitting = ref(false);
 
-onMounted(() => {
+onMounted(async () => {
+  await initClub();
   loadMembers();
 });
 
+const initClub = async () => {
+  try {
+    const clubs = await getMyClubs();
+    if (clubs && clubs.length > 0) {
+      const club = clubs.find((c) => c.role === "LEADER") || clubs[0];
+      currentClubId.value = club.id;
+    }
+  } catch (error) {
+    console.error("获取社团信息失败:", error);
+    ElMessage.error("获取社团信息失败");
+  }
+};
+
 const loadMembers = async () => {
+  if (!currentClubId.value) return;
+
   loading.value = true;
   try {
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    memberData.value = [
-      {
-        userId: 1,
-        username: "user001",
-        realName: "张三",
-        studentId: "20230001",
-        role: "LEADER",
-        joinTime: "2024-01-15 10:00:00",
-      },
-      {
-        userId: 2,
-        username: "user002",
-        realName: "李四",
-        studentId: "20230002",
-        role: "MEMBER",
-        joinTime: "2024-01-16 11:20:00",
-      },
-    ];
+    const data = await getClubMembers(currentClubId.value, {
+      pageNum: pagination.pageNum,
+      pageSize: pagination.pageSize,
+    });
+    memberData.value = data.records || [];
+    pagination.total = data.total || 0;
+  } catch (error) {
+    console.error("加载成员失败:", error);
+    ElMessage.error("加载成员失败");
   } finally {
     loading.value = false;
   }
 };
 
 const loadApplications = async () => {
+  if (!currentClubId.value) return;
+
   loading.value = true;
   try {
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    applicationData.value = [
-      {
-        id: 1,
-        userId: 3,
-        username: "user003",
-        realName: "王五",
-        studentId: "20230003",
-        reason: "我对编程很感兴趣，希望能加入社团学习",
-        status: "PENDING",
-        createTime: "2024-06-10 14:30:00",
-      },
-      {
-        id: 2,
-        userId: 4,
-        username: "user004",
-        realName: "赵六",
-        studentId: "20230004",
-        reason: "想提升编程技能",
-        status: "PENDING",
-        createTime: "2024-06-11 09:15:00",
-      },
-    ];
-    pagination.total = 2;
+    const data = await getClubPendingApplications(currentClubId.value, {
+      pageNum: pagination.pageNum,
+      pageSize: pagination.pageSize,
+    });
+    applicationData.value = data.records || [];
+    pagination.total = data.total || 0;
+  } catch (error) {
+    console.error("加载申请列表失败:", error);
+    ElMessage.error("加载申请列表失败");
   } finally {
     loading.value = false;
   }
@@ -192,24 +190,6 @@ const handleTabChange = (tab) => {
   if (tab === "applications") {
     loadApplications();
   }
-};
-
-const getStatusType = (status) => {
-  const map = {
-    PENDING: "warning",
-    APPROVED: "success",
-    REJECTED: "danger",
-  };
-  return map[status] || "info";
-};
-
-const getStatusText = (status) => {
-  const map = {
-    PENDING: "待审核",
-    APPROVED: "已通过",
-    REJECTED: "已拒绝",
-  };
-  return map[status] || "未知";
 };
 
 const handleApprove = (row) => {
@@ -229,13 +209,20 @@ const handleReject = (row) => {
 };
 
 const handleReviewSubmit = async () => {
+  if (!currentClubId.value) return;
+
   try {
     submitting.value = true;
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await reviewClubApplication(currentClubId.value, {
+      applicationId: reviewForm.applicationId,
+      approved: reviewForm.approved,
+      note: reviewForm.note,
+    });
     ElMessage.success("审核成功");
     reviewDialogVisible.value = false;
     loadApplications();
   } catch (error) {
+    console.error("审核失败:", error);
     ElMessage.error("审核失败");
   } finally {
     submitting.value = false;

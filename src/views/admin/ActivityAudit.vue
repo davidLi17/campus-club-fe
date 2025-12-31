@@ -1,7 +1,12 @@
 <template>
   <div class="activity-audit">
     <el-card class="search-card">
-      <el-form :inline="true" :model="searchForm" class="search-form">
+      <el-form
+        :inline="true"
+        :model="searchForm"
+        class="search-form"
+        @submit.prevent="handleSearch"
+      >
         <el-form-item label="关键词">
           <el-input
             v-model="searchForm.keyword"
@@ -27,7 +32,7 @@
             <el-icon><Search /></el-icon> 搜索
           </el-button>
           <el-button @click="handleReset">
-            <el-icon><Refresh /></el-icon> 重置
+            <el-icon><Refresh /></el-icon> 刷新数据
           </el-button>
         </el-form-item>
       </el-form>
@@ -125,6 +130,10 @@ import {
   reviewActivity,
   deleteActivity,
 } from "@/api/clubAdmin";
+import {
+  getActivityStatusType,
+  getActivityStatusText,
+} from "@/utils/statusMap";
 
 const loading = ref(false);
 const tableData = ref([]);
@@ -154,73 +163,19 @@ onMounted(() => {
 const loadData = async () => {
   loading.value = true;
   try {
-    await mockLoadData();
+    const data = await getAllActivities({
+      ...searchForm,
+      pageNum: pagination.pageNum,
+      pageSize: pagination.pageSize,
+    });
+    tableData.value = data.records || [];
+    pagination.total = data.total || 0;
   } catch (error) {
+    console.error("加载数据失败:", error);
     ElMessage.error("加载数据失败");
   } finally {
     loading.value = false;
   }
-};
-
-const mockLoadData = () => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      tableData.value = [
-        {
-          id: 1,
-          clubId: 1,
-          clubName: "计算机协会",
-          title: "编程马拉松大赛",
-          content: "24小时编程挑战，展示你的编程实力",
-          location: "计算机楼301",
-          startTime: "2024-06-15 09:00:00",
-          endTime: "2024-06-16 09:00:00",
-          status: "PENDING",
-          maxMembers: 50,
-          currentMembers: 25,
-          createUsername: "张三",
-        },
-        {
-          id: 2,
-          clubId: 2,
-          clubName: "篮球社",
-          title: "篮球友谊赛",
-          content: "与兄弟院校进行篮球友谊赛",
-          location: "体育馆",
-          startTime: "2024-06-20 14:00:00",
-          endTime: "2024-06-20 17:00:00",
-          status: "APPROVED",
-          maxMembers: 30,
-          currentMembers: 28,
-          createUsername: "李四",
-        },
-      ];
-      pagination.total = 2;
-      resolve();
-    }, 300);
-  });
-};
-
-const getStatusType = (status) => {
-  const map = {
-    PENDING: "warning",
-    APPROVED: "success",
-    REJECTED: "danger",
-    CANCELLED: "info",
-    COMPLETED: "info",
-  };
-  return map[status] || "info";
-};
-
-const getStatusText = (status) => {
-  const map = {
-    PENDING: "待审核",
-    APPROVED: "已通过",
-    REJECTED: "已拒绝",
-    CANCELLED: "已取消",
-    COMPLETED: "已完成",
-  };
-  return map[status] || "未知";
 };
 
 const handleSearch = () => {
@@ -258,11 +213,15 @@ const handleReject = (row) => {
 const handleReviewSubmit = async () => {
   try {
     submitting.value = true;
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await reviewActivity(reviewForm.activityId, {
+      approved: reviewForm.approved,
+      note: reviewForm.note,
+    });
     ElMessage.success("审核成功");
     reviewDialogVisible.value = false;
     loadData();
   } catch (error) {
+    console.error("审核失败:", error);
     ElMessage.error("审核失败");
   } finally {
     submitting.value = false;
@@ -277,11 +236,12 @@ const handleDelete = async (row) => {
       type: "warning",
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await deleteActivity(row.id);
     ElMessage.success("删除成功");
     loadData();
   } catch (error) {
     if (error !== "cancel") {
+      console.error("删除失败:", error);
       ElMessage.error("删除失败");
     }
   }

@@ -19,8 +19,8 @@
           clubInfo.createTime
         }}</el-descriptions-item>
         <el-descriptions-item label="状态">
-          <el-tag :type="clubInfo.status === 'ACTIVE' ? 'success' : 'info'">
-            {{ clubInfo.status === "ACTIVE" ? "正常" : "停用" }}
+          <el-tag :type="getClubStatusType(clubInfo.status)">
+            {{ getClubStatusText(clubInfo.status) }}
           </el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="社团简介" :span="2">
@@ -60,14 +60,18 @@
 import { ref, reactive, onMounted } from "vue";
 import { ElMessage } from "element-plus";
 import { updateClubInfo } from "@/api/clubAdmin";
+import { getMyClubs } from "@/api/club";
+import { useUserStore } from "@/stores/user";
+import { getClubStatusType, getClubStatusText } from "@/utils/statusMap";
 
+const userStore = useUserStore();
 const clubInfo = ref({
-  id: 1,
-  name: "计算机协会",
-  description: "致力于推广计算机技术，提升学生编程能力",
-  memberCount: 50,
-  status: "ACTIVE",
-  createTime: "2024-01-15 10:00:00",
+  id: null,
+  name: "",
+  description: "",
+  memberCount: 0,
+  status: "",
+  createTime: "",
 });
 
 const dialogVisible = ref(false);
@@ -84,9 +88,23 @@ const formRules = {
   description: [{ required: true, message: "请输入社团简介", trigger: "blur" }],
 };
 
-onMounted(() => {
-  // Mock数据
+onMounted(async () => {
+  await loadClubInfo();
 });
+
+const loadClubInfo = async () => {
+  try {
+    const clubs = await getMyClubs();
+    if (clubs && clubs.length > 0) {
+      // 假设社团管理员只管理一个社团，或者取第一个
+      const club = clubs.find((c) => c.role === "LEADER") || clubs[0];
+      clubInfo.value = club;
+    }
+  } catch (error) {
+    console.error("加载社团信息失败:", error);
+    ElMessage.error("加载社团信息失败");
+  }
+};
 
 const handleEdit = () => {
   Object.assign(form, {
@@ -102,13 +120,14 @@ const handleSubmit = async () => {
     await formRef.value.validate();
     submitting.value = true;
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await updateClubInfo(clubInfo.value.id, form);
 
     Object.assign(clubInfo.value, form);
     ElMessage.success("更新成功");
     dialogVisible.value = false;
   } catch (error) {
     console.error("更新失败:", error);
+    ElMessage.error("更新失败");
   } finally {
     submitting.value = false;
   }

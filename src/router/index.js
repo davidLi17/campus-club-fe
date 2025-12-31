@@ -28,13 +28,13 @@ const routes = [
         path: "admin/clubs",
         name: "AdminClubs",
         component: () => import("@/views/admin/ClubManage.vue"),
-        meta: { title: "社团管理", roles: ["ADMIN"] },
+        meta: { title: "社团管理", roles: ["system_admin"] },
       },
       {
         path: "admin/activities",
         name: "AdminActivities",
         component: () => import("@/views/admin/ActivityAudit.vue"),
-        meta: { title: "活动审核", roles: ["ADMIN"] },
+        meta: { title: "活动审核", roles: ["system_admin"] },
       },
 
       // 社团管理员路由
@@ -42,19 +42,19 @@ const routes = [
         path: "club-admin/info",
         name: "ClubInfo",
         component: () => import("@/views/club-admin/ClubInfo.vue"),
-        meta: { title: "社团信息", roles: ["CLUB_ADMIN", "ADMIN"] },
+        meta: { title: "社团信息", roles: ["club_admin", "system_admin"] },
       },
       {
         path: "club-admin/members",
         name: "MemberManage",
         component: () => import("@/views/club-admin/MemberManage.vue"),
-        meta: { title: "成员管理", roles: ["CLUB_ADMIN", "ADMIN"] },
+        meta: { title: "成员管理", roles: ["club_admin", "system_admin"] },
       },
       {
         path: "club-admin/activities",
         name: "ActivityManage",
         component: () => import("@/views/club-admin/ActivityManage.vue"),
-        meta: { title: "活动管理", roles: ["CLUB_ADMIN", "ADMIN"] },
+        meta: { title: "活动管理", roles: ["club_admin", "system_admin"] },
       },
     ],
   },

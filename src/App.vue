@@ -5,7 +5,7 @@
 </template>
 
 <style>
-/* 全局样式重置 */
+/* 全局样式刷新数据 */
 * {
   margin: 0;
   padding: 0;
