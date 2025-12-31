@@ -3,7 +3,7 @@ import { ref, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessageBox } from "element-plus";
 import { useUserStore } from "@/stores/user";
-import { getUserRoleText } from "@/utils/statusMap";
+import { getUserRoleText } from "@/constants/user";
 
 const route = useRoute();
 const router = useRouter();

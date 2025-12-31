@@ -10,8 +10,8 @@
             <el-table-column prop="studentId" label="学号" width="150" />
             <el-table-column prop="role" label="角色" width="120">
               <template #default="{ row }">
-                <el-tag :type="row.role === 'LEADER' ? 'danger' : 'info'">
-                  {{ row.role === "LEADER" ? "负责人" : "成员" }}
+                <el-tag :type="getClubMemberRoleType(row.role)">
+                  {{ getClubMemberRoleText(row.role) }}
                 </el-tag>
               </template>
             </el-table-column>
@@ -30,15 +30,15 @@
             <el-table-column prop="createTime" label="申请时间" width="180" />
             <el-table-column prop="status" label="状态" width="100">
               <template #default="{ row }">
-                <el-tag :type="getStatusType(row.status)">
-                  {{ getStatusText(row.status) }}
+                <el-tag :type="getApplicationStatusType(row.status)">
+                  {{ getApplicationStatusText(row.status) }}
                 </el-tag>
               </template>
             </el-table-column>
             <el-table-column label="操作" width="200" fixed="right">
               <template #default="{ row }">
                 <el-button
-                  v-if="row.status === 'PENDING'"
+                  v-if="isApplicationPending(row.status)"
                   size="small"
                   type="success"
                   @click="handleApprove(row)"
@@ -46,7 +46,7 @@
                   通过
                 </el-button>
                 <el-button
-                  v-if="row.status === 'PENDING'"
+                  v-if="isApplicationPending(row.status)"
                   size="small"
                   type="danger"
                   @click="handleReject(row)"
@@ -108,7 +108,13 @@ import { getClubMembers, getMyClubs } from "@/api/club";
 import {
   getApplicationStatusType,
   getApplicationStatusText,
-} from "@/utils/statusMap";
+  isApplicationPending,
+} from "@/constants/application";
+import {
+  isClubLeader,
+  getClubMemberRoleType,
+  getClubMemberRoleText,
+} from "@/constants/club";
 
 const activeTab = ref("members");
 const loading = ref(false);

@@ -20,8 +20,8 @@
         </el-table-column>
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="getStatusType(row.status)">
-              {{ getStatusText(row.status) }}
+            <el-tag :type="getActivityStatusType(row.status)">
+              {{ getActivityStatusText(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -126,17 +126,17 @@
         <el-table-column prop="realName" label="真实姓名" width="150" />
         <el-table-column prop="studentId" label="学号" width="150" />
         <el-table-column prop="signupTime" label="报名时间" width="180" />
-        <el-table-column prop="attendStatus" label="签到状态" width="120">
+        <el-table-column prop="status" label="签到状态" width="120">
           <template #default="{ row }">
-            <el-tag :type="getAttendanceStatusType(row.attendStatus)">
-              {{ getAttendanceStatusText(row.attendStatus) }}
+            <el-tag :type="getSignupStatusType(row.status)">
+              {{ getSignupStatusText(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="180">
           <template #default="{ row }">
             <el-button
-              v-if="!row.attendStatus"
+              v-if="canCheckin(row.status)"
               size="small"
               type="success"
               @click="handleCheckin(row, 'PRESENT')"
@@ -144,7 +144,7 @@
               签到
             </el-button>
             <el-button
-              v-if="!row.attendStatus"
+              v-if="canCheckin(row.status)"
               size="small"
               type="warning"
               @click="handleCheckin(row, 'ABSENT')"
@@ -154,6 +154,59 @@
           </template>
         </el-table-column>
       </el-table>
+
+      <div class="pagination">
+        <el-pagination
+          v-model:current-page="signupPagination.pageNum"
+          v-model:page-size="signupPagination.pageSize"
+          :total="signupPagination.total"
+          layout="total, prev, pager, next"
+          @size-change="loadSignups"
+          @current-change="loadSignups"
+        />
+      </div>
+    </el-dialog>
+
+    <!-- 查看详情对话框 -->
+    <el-dialog v-model="viewDialogVisible" title="活动详情" width="700px">
+      <el-descriptions :column="2" border>
+        <el-descriptions-item label="活动名称" :span="2">
+          {{ viewActivity?.title }}
+        </el-descriptions-item>
+        <el-descriptions-item label="活动地点">
+          {{ viewActivity?.location }}
+        </el-descriptions-item>
+        <el-descriptions-item label="状态">
+          <el-tag :type="getActivityStatusType(viewActivity?.status)">
+            {{ getActivityStatusText(viewActivity?.status) }}
+          </el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="开始时间">
+          {{ viewActivity?.startTime }}
+        </el-descriptions-item>
+        <el-descriptions-item label="结束时间">
+          {{ viewActivity?.endTime }}
+        </el-descriptions-item>
+        <el-descriptions-item label="报名开始时间">
+          {{ viewActivity?.signupStartTime || "未设置" }}
+        </el-descriptions-item>
+        <el-descriptions-item label="报名结束时间">
+          {{ viewActivity?.signupEndTime || "未设置" }}
+        </el-descriptions-item>
+        <el-descriptions-item label="报名人数">
+          {{ viewActivity?.currentMembers }} /
+          {{ viewActivity?.maxMembers || "不限" }}
+        </el-descriptions-item>
+        <el-descriptions-item label="创建时间">
+          {{ viewActivity?.createTime }}
+        </el-descriptions-item>
+        <el-descriptions-item label="活动内容" :span="2">
+          <div style="white-space: pre-wrap">{{ viewActivity?.content }}</div>
+        </el-descriptions-item>
+      </el-descriptions>
+      <template #footer>
+        <el-button @click="viewDialogVisible = false">关闭</el-button>
+      </template>
     </el-dialog>
   </div>
 </template>
@@ -169,15 +222,21 @@ import {
   checkinActivity,
 } from "@/api/clubAdmin";
 import { getActivityList } from "@/api/activity";
+import { getMyClubs } from "@/api/club";
 import {
   getActivityStatusType,
   getActivityStatusText,
-  getAttendanceStatusType,
-  getAttendanceStatusText,
-} from "@/utils/statusMap";
+} from "@/constants/activity";
+import {
+  getSignupStatusType,
+  getSignupStatusText,
+  canCheckin,
+  CheckinAction,
+} from "@/constants/signup";
 
 const loading = ref(false);
 const tableData = ref([]);
+const currentClubId = ref(null);
 const pagination = reactive({
   pageNum: 1,
   pageSize: 10,
@@ -188,8 +247,11 @@ const dialogVisible = ref(false);
 const dialogTitle = ref("创建活动");
 const formRef = ref(null);
 const submitting = ref(false);
+const viewDialogVisible = ref(false);
+const viewActivity = ref(null);
 const form = reactive({
   id: null,
+  clubId: null,
   title: "",
   content: "",
   location: "",
@@ -213,67 +275,64 @@ const signupDialogVisible = ref(false);
 const signupLoading = ref(false);
 const signupData = ref([]);
 const currentActivity = ref(null);
+const signupPagination = reactive({
+  pageNum: 1,
+  pageSize: 10,
+  total: 0,
+});
 
-onMounted(() => {
+onMounted(async () => {
+  await initClub();
   loadData();
 });
 
+const initClub = async () => {
+  try {
+    const clubs = await getMyClubs();
+    if (clubs && clubs.length > 0) {
+      const club = clubs.find((c) => c.role === "LEADER") || clubs[0];
+      currentClubId.value = club.id;
+    }
+  } catch (error) {
+    console.error("获取社团信息失败:", error);
+    ElMessage.error("获取社团信息失败");
+  }
+};
+
 const loadData = async () => {
+  if (!currentClubId.value) return;
+
   loading.value = true;
   try {
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    tableData.value = [
-      {
-        id: 1,
-        title: "编程马拉松大赛",
-        content: "24小时编程挑战",
-        location: "计算机楼301",
-        startTime: "2024-06-15 09:00:00",
-        endTime: "2024-06-16 09:00:00",
-        status: "PENDING",
-        maxMembers: 50,
-        currentMembers: 25,
-      },
-      {
-        id: 2,
-        title: "技术分享会",
-        content: "Vue3新特性分享",
-        location: "教学楼201",
-        startTime: "2024-06-20 14:00:00",
-        endTime: "2024-06-20 17:00:00",
-        status: "APPROVED",
-        maxMembers: 100,
-        currentMembers: 78,
-      },
-    ];
-    pagination.total = 2;
+    const data = await getActivityList({
+      clubId: currentClubId.value,
+      pageNum: pagination.pageNum,
+      pageSize: pagination.pageSize,
+    });
+    tableData.value = data.records || [];
+    pagination.total = data.total || 0;
+  } catch (error) {
+    console.error("加载活动列表失败:", error);
+    ElMessage.error("加载活动列表失败");
   } finally {
     loading.value = false;
   }
 };
 
 const loadSignups = async () => {
+  if (!currentActivity.value) return;
+
   signupLoading.value = true;
   try {
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    signupData.value = [
-      {
-        userId: 1,
-        username: "user001",
-        realName: "张三",
-        studentId: "20230001",
-        signupTime: "2024-06-10 10:00:00",
-        attendStatus: null,
-      },
-      {
-        userId: 2,
-        username: "user002",
-        realName: "李四",
-        studentId: "20230002",
-        signupTime: "2024-06-10 11:00:00",
-        attendStatus: "PRESENT",
-      },
-    ];
+    const data = await getActivitySignups(currentActivity.value.id, {
+      pageNum: signupPagination.pageNum,
+      pageSize: signupPagination.pageSize,
+    });
+    signupData.value = data.records || [];
+    signupPagination.total = data.total || 0;
+  } catch (error) {
+    console.error("加载报名列表失败:", error);
+    ElMessage.error("加载报名列表失败");
   } finally {
     signupLoading.value = false;
   }
@@ -283,6 +342,7 @@ const handleCreate = () => {
   dialogTitle.value = "创建活动";
   Object.assign(form, {
     id: null,
+    clubId: currentClubId.value,
     title: "",
     content: "",
     location: "",
@@ -296,17 +356,30 @@ const handleCreate = () => {
 };
 
 const handleView = (row) => {
-  ElMessage.info("查看功能开发中");
+  viewActivity.value = row;
+  viewDialogVisible.value = true;
 };
 
 const handleEdit = (row) => {
   dialogTitle.value = "编辑活动";
-  Object.assign(form, row);
+  Object.assign(form, {
+    id: row.id,
+    clubId: row.clubId,
+    title: row.title,
+    content: row.content,
+    location: row.location,
+    startTime: row.startTime,
+    endTime: row.endTime,
+    signupStartTime: row.signupStartTime,
+    signupEndTime: row.signupEndTime,
+    maxMembers: row.maxMembers,
+  });
   dialogVisible.value = true;
 };
 
 const handleSignups = (row) => {
   currentActivity.value = row;
+  signupPagination.pageNum = 1;
   signupDialogVisible.value = true;
   loadSignups();
 };
@@ -319,11 +392,12 @@ const handleCancel = async (row) => {
       type: "warning",
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await cancelActivity(row.id);
     ElMessage.success("取消成功");
     loadData();
   } catch (error) {
     if (error !== "cancel") {
+      console.error("取消失败:", error);
       ElMessage.error("取消失败");
     }
   }
@@ -334,11 +408,30 @@ const handleSubmit = async () => {
     await formRef.value.validate();
     submitting.value = true;
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
     if (form.id) {
+      await updateActivity(form.id, {
+        title: form.title,
+        content: form.content,
+        location: form.location,
+        startTime: form.startTime,
+        endTime: form.endTime,
+        signupStartTime: form.signupStartTime,
+        signupEndTime: form.signupEndTime,
+        maxMembers: form.maxMembers,
+      });
       ElMessage.success("更新成功");
     } else {
+      await createActivity({
+        clubId: form.clubId,
+        title: form.title,
+        content: form.content,
+        location: form.location,
+        startTime: form.startTime,
+        endTime: form.endTime,
+        signupStartTime: form.signupStartTime,
+        signupEndTime: form.signupEndTime,
+        maxMembers: form.maxMembers,
+      });
       ElMessage.success("创建成功");
     }
 
@@ -346,6 +439,7 @@ const handleSubmit = async () => {
     loadData();
   } catch (error) {
     console.error("提交失败:", error);
+    ElMessage.error("操作失败");
   } finally {
     submitting.value = false;
   }
@@ -353,10 +447,16 @@ const handleSubmit = async () => {
 
 const handleCheckin = async (row, status) => {
   try {
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    const action =
+      status === "PRESENT" ? CheckinAction.CHECK_IN : CheckinAction.ABSENT;
+    await checkinActivity(currentActivity.value.id, {
+      userIds: [row.userId],
+      action: action,
+    });
     ElMessage.success(status === "PRESENT" ? "签到成功" : "已标记缺席");
-    row.attendStatus = status;
+    loadSignups();
   } catch (error) {
+    console.error("操作失败:", error);
     ElMessage.error("操作失败");
   }
 };

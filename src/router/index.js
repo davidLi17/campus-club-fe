@@ -2,24 +2,43 @@ import { createRouter, createWebHistory } from "vue-router";
 import { useUserStore } from "@/stores/user";
 import { getToken } from "@/utils/auth";
 
+// 预定义组件导入函数，方便预加载
+const componentLoaders = {
+  Login: () => import("@/views/common/Login.vue"),
+  Layout: () => import("@/views/common/Layout.vue"),
+  Dashboard: () => import("@/views/common/Dashboard.vue"),
+  ClubManage: () => import("@/views/admin/ClubManage.vue"),
+  ActivityAudit: () => import("@/views/admin/ActivityAudit.vue"),
+  ClubInfo: () => import("@/views/club-admin/ClubInfo.vue"),
+  MemberManage: () => import("@/views/club-admin/MemberManage.vue"),
+  ActivityManage: () => import("@/views/club-admin/ActivityManage.vue"),
+};
+
+// 预加载所有组件（登录后调用）
+export const preloadAllComponents = () => {
+  Object.values(componentLoaders).forEach((loader) => {
+    loader();
+  });
+};
+
 const routes = [
   {
     path: "/login",
     name: "Login",
-    component: () => import("@/views/common/Login.vue"),
+    component: componentLoaders.Login,
     meta: { requiresAuth: false },
   },
   {
     path: "/",
     name: "Layout",
-    component: () => import("@/views/common/Layout.vue"),
+    component: componentLoaders.Layout,
     redirect: "/dashboard",
     meta: { requiresAuth: true },
     children: [
       {
         path: "dashboard",
         name: "Dashboard",
-        component: () => import("@/views/common/Dashboard.vue"),
+        component: componentLoaders.Dashboard,
         meta: { title: "工作台" },
       },
 
@@ -27,13 +46,13 @@ const routes = [
       {
         path: "admin/clubs",
         name: "AdminClubs",
-        component: () => import("@/views/admin/ClubManage.vue"),
+        component: componentLoaders.ClubManage,
         meta: { title: "社团管理", roles: ["system_admin"] },
       },
       {
         path: "admin/activities",
         name: "AdminActivities",
-        component: () => import("@/views/admin/ActivityAudit.vue"),
+        component: componentLoaders.ActivityAudit,
         meta: { title: "活动审核", roles: ["system_admin"] },
       },
 
@@ -41,19 +60,19 @@ const routes = [
       {
         path: "club-admin/info",
         name: "ClubInfo",
-        component: () => import("@/views/club-admin/ClubInfo.vue"),
+        component: componentLoaders.ClubInfo,
         meta: { title: "社团信息", roles: ["club_admin", "system_admin"] },
       },
       {
         path: "club-admin/members",
         name: "MemberManage",
-        component: () => import("@/views/club-admin/MemberManage.vue"),
+        component: componentLoaders.MemberManage,
         meta: { title: "成员管理", roles: ["club_admin", "system_admin"] },
       },
       {
         path: "club-admin/activities",
         name: "ActivityManage",
-        component: () => import("@/views/club-admin/ActivityManage.vue"),
+        component: componentLoaders.ActivityManage,
         meta: { title: "活动管理", roles: ["club_admin", "system_admin"] },
       },
     ],

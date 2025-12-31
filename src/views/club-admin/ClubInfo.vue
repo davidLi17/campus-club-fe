@@ -62,7 +62,7 @@ import { ElMessage } from "element-plus";
 import { updateClubInfo } from "@/api/clubAdmin";
 import { getMyClubs } from "@/api/club";
 import { useUserStore } from "@/stores/user";
-import { getClubStatusType, getClubStatusText } from "@/utils/statusMap";
+import { getClubStatusType, getClubStatusText } from "@/constants/club";
 
 const userStore = useUserStore();
 const clubInfo = ref({

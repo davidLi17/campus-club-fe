@@ -130,8 +130,8 @@
         <el-table-column prop="realName" label="真实姓名" width="120" />
         <el-table-column prop="role" label="角色" width="120">
           <template #default="{ row }">
-            <el-tag :type="row.role === 'LEADER' ? 'danger' : 'info'">
-              {{ row.role === "LEADER" ? "负责人" : "成员" }}
+            <el-tag :type="getClubMemberRoleType(row.role)">
+              {{ getClubMemberRoleText(row.role) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -139,7 +139,7 @@
         <el-table-column label="操作" width="200">
           <template #default="{ row }">
             <el-button
-              v-if="row.role !== 'LEADER'"
+              v-if="!isClubLeader(row.role)"
               size="small"
               type="primary"
               @click="handleSetLeader(row)"
@@ -169,6 +169,47 @@
         />
       </div>
     </el-dialog>
+
+    <!-- 查看详情对话框 -->
+    <el-dialog v-model="viewDialogVisible" title="社团详情" width="700px">
+      <el-descriptions :column="2" border>
+        <el-descriptions-item label="社团ID">
+          {{ viewClub?.id }}
+        </el-descriptions-item>
+        <el-descriptions-item label="社团名称">
+          {{ viewClub?.name }}
+        </el-descriptions-item>
+        <el-descriptions-item label="创建人">
+          {{ viewClub?.createUsername }}
+        </el-descriptions-item>
+        <el-descriptions-item label="成员数">
+          {{ viewClub?.memberCount }}
+        </el-descriptions-item>
+        <el-descriptions-item label="状态">
+          <el-tag :type="getClubStatusType(viewClub?.status)">
+            {{ getClubStatusText(viewClub?.status) }}
+          </el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="创建时间">
+          {{ viewClub?.createTime }}
+        </el-descriptions-item>
+        <el-descriptions-item label="Logo" :span="2">
+          <el-image
+            v-if="viewClub?.logo"
+            :src="viewClub.logo"
+            style="width: 100px; height: 100px"
+            fit="contain"
+          />
+          <span v-else>未设置</span>
+        </el-descriptions-item>
+        <el-descriptions-item label="社团简介" :span="2">
+          <div style="white-space: pre-wrap">{{ viewClub?.description }}</div>
+        </el-descriptions-item>
+      </el-descriptions>
+      <template #footer>
+        <el-button @click="viewDialogVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -183,7 +224,13 @@ import {
   removeClubLeader,
 } from "@/api/admin";
 import { getClubList, getClubMembers } from "@/api/club";
-import { getClubStatusType, getClubStatusText } from "@/utils/statusMap";
+import {
+  getClubStatusType,
+  getClubStatusText,
+  isClubLeader,
+  getClubMemberRoleType,
+  getClubMemberRoleText,
+} from "@/constants/club";
 
 const loading = ref(false);
 const tableData = ref([]);
@@ -216,6 +263,8 @@ const memberDialogVisible = ref(false);
 const memberLoading = ref(false);
 const memberData = ref([]);
 const currentClub = ref(null);
+const viewDialogVisible = ref(false);
+const viewClub = ref(null);
 const memberPagination = reactive({
   pageNum: 1,
   pageSize: 10,
@@ -284,7 +333,8 @@ const handleCreate = () => {
 };
 
 const handleView = (row) => {
-  ElMessage.info("查看功能开发中");
+  viewClub.value = row;
+  viewDialogVisible.value = true;
 };
 
 const handleEdit = (row) => {

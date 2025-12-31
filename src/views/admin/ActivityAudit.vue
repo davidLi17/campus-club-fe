@@ -14,17 +14,17 @@
             clearable
           />
         </el-form-item>
-        <el-form-item label="状态">
+        <el-form-item width="200px" label="状态">
           <el-select
             v-model="searchForm.status"
             placeholder="选择状态"
             clearable
           >
             <el-option label="全部" value="" />
-            <el-option label="待审核" value="PENDING" />
-            <el-option label="已通过" value="APPROVED" />
-            <el-option label="已拒绝" value="REJECTED" />
-            <el-option label="已取消" value="CANCELLED" />
+            <el-option label="待审核" :value="ActivityStatus.PENDING" />
+            <el-option label="已通过" :value="ActivityStatus.PUBLISHED" />
+            <el-option label="已拒绝" :value="ActivityStatus.REJECTED" />
+            <el-option label="已取消" :value="ActivityStatus.CANCELLED" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -52,8 +52,8 @@
         </el-table-column>
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="getStatusType(row.status)">
-              {{ getStatusText(row.status) }}
+            <el-tag :type="getActivityStatusType(row.status)">
+              {{ getActivityStatusText(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -61,7 +61,7 @@
           <template #default="{ row }">
             <el-button size="small" @click="handleView(row)">查看</el-button>
             <el-button
-              v-if="row.status === 'PENDING'"
+              v-if="isActivityPending(row.status)"
               size="small"
               type="success"
               @click="handleApprove(row)"
@@ -69,7 +69,7 @@
               通过
             </el-button>
             <el-button
-              v-if="row.status === 'PENDING'"
+              v-if="isActivityPending(row.status)"
               size="small"
               type="warning"
               @click="handleReject(row)"
@@ -119,6 +119,45 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- 查看详情对话框 -->
+    <el-dialog v-model="viewDialogVisible" title="活动详情" width="700px">
+      <el-descriptions :column="2" border>
+        <el-descriptions-item label="活动ID">
+          {{ viewActivity?.id }}
+        </el-descriptions-item>
+        <el-descriptions-item label="活动名称">
+          {{ viewActivity?.title }}
+        </el-descriptions-item>
+        <el-descriptions-item label="所属社团">
+          {{ viewActivity?.clubName }}
+        </el-descriptions-item>
+        <el-descriptions-item label="活动地点">
+          {{ viewActivity?.location }}
+        </el-descriptions-item>
+        <el-descriptions-item label="状态">
+          <el-tag :type="getActivityStatusType(viewActivity?.status)">
+            {{ getActivityStatusText(viewActivity?.status) }}
+          </el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="报名人数">
+          {{ viewActivity?.currentMembers }} /
+          {{ viewActivity?.maxMembers || "不限" }}
+        </el-descriptions-item>
+        <el-descriptions-item label="开始时间">
+          {{ viewActivity?.startTime }}
+        </el-descriptions-item>
+        <el-descriptions-item label="结束时间">
+          {{ viewActivity?.endTime }}
+        </el-descriptions-item>
+        <el-descriptions-item label="活动内容" :span="2">
+          <div style="white-space: pre-wrap">{{ viewActivity?.content }}</div>
+        </el-descriptions-item>
+      </el-descriptions>
+      <template #footer>
+        <el-button @click="viewDialogVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -133,10 +172,13 @@ import {
 import {
   getActivityStatusType,
   getActivityStatusText,
-} from "@/utils/statusMap";
+  isActivityPending,
+  ActivityStatus,
+} from "@/constants/activity";
 
 const loading = ref(false);
 const tableData = ref([]);
+
 const searchForm = reactive({
   keyword: "",
   status: "",
@@ -151,10 +193,12 @@ const reviewDialogVisible = ref(false);
 const reviewTitle = ref("");
 const reviewForm = reactive({
   activityId: null,
-  approved: true,
+  status: "",
   note: "",
 });
 const submitting = ref(false);
+const viewDialogVisible = ref(false);
+const viewActivity = ref(null);
 
 onMounted(() => {
   loadData();
@@ -191,13 +235,15 @@ const handleReset = () => {
 };
 
 const handleView = (row) => {
-  ElMessage.info("查看功能开发中");
+  viewActivity.value = row;
+  viewDialogVisible.value = true;
 };
+// 审核状态：published-通过，rejected-拒绝
 
 const handleApprove = (row) => {
   reviewTitle.value = "通过审核";
   reviewForm.activityId = row.id;
-  reviewForm.approved = true;
+  reviewForm.status = ActivityStatus.PUBLISHED;
   reviewForm.note = "";
   reviewDialogVisible.value = true;
 };
@@ -205,7 +251,7 @@ const handleApprove = (row) => {
 const handleReject = (row) => {
   reviewTitle.value = "拒绝审核";
   reviewForm.activityId = row.id;
-  reviewForm.approved = false;
+  reviewForm.status = ActivityStatus.REJECTED;
   reviewForm.note = "";
   reviewDialogVisible.value = true;
 };
@@ -214,7 +260,7 @@ const handleReviewSubmit = async () => {
   try {
     submitting.value = true;
     await reviewActivity(reviewForm.activityId, {
-      approved: reviewForm.approved,
+      status: reviewForm.status,
       note: reviewForm.note,
     });
     ElMessage.success("审核成功");

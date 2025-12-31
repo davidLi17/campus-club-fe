@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "jsx": "preserve",
+    "checkJs": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "types": ["vite/client", "element-plus/global"],
+    "paths": {
+      "@/*": ["src/*"],
+      "@components/*": ["src/components/*"],
+      "@views/*": ["src/views/*"],
+      "@utils/*": ["src/utils/*"],
+      "@api/*": ["src/api/*"],
+      "@assets/*": ["src/assets/*"],
+      "@stores/*": ["src/stores/*"]
+    }
+  },
+  "include": [
+    "src/**/*",
+    "src/**/*.vue",
+    "auto-imports.d.ts",
+    "components.d.ts",
+    "vite-env.d.ts"
+  ],
+  "exclude": ["node_modules", "dist", "public"],
+  "vue": {
+    "takeOverMode": true
+  }
+}

@@ -4,6 +4,7 @@ import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { useUserStore } from "@/stores/user";
 import { setToken } from "@/utils/auth";
+import { preloadAllComponents } from "@/router";
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -32,6 +33,9 @@ const handleLogin = async () => {
 
     // 调用真实登录接口
     await userStore.login(loginForm);
+
+    // 登录成功后预加载所有组件
+    preloadAllComponents();
 
     ElMessage.success("登录成功");
     router.push("/dashboard");
