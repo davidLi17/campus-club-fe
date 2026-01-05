@@ -5,6 +5,10 @@
         <el-icon><Plus /></el-icon>
         创建活动
       </el-button>
+      <el-button v-if="hasDraft()" type="info" @click="handleShowDraftInfo">
+        <el-icon><Document /></el-icon>
+        有未提交的草稿
+      </el-button>
     </el-card>
 
     <el-card class="table-card">
@@ -111,10 +115,29 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="submitting" @click="handleSubmit">
-          确定
-        </el-button>
+        <div class="dialog-footer">
+          <div class="footer-left">
+            <el-button
+              v-if="hasDraft() && !form.id"
+              type="warning"
+              plain
+              @click="handleClearDraft"
+            >
+              <el-icon><Delete /></el-icon>
+              清除草稿
+            </el-button>
+          </div>
+          <div class="footer-right">
+            <el-button @click="dialogVisible = false">取消</el-button>
+            <el-button
+              type="primary"
+              :loading="submitting"
+              @click="handleSubmit"
+            >
+              确定
+            </el-button>
+          </div>
+        </div>
       </template>
     </el-dialog>
 
@@ -212,17 +235,10 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from "vue";
-import { ElMessage, ElMessageBox } from "element-plus";
-import {
-  createActivity,
-  updateActivity,
-  cancelActivity,
-  getActivitySignups,
-  checkinActivity,
-} from "@/api/clubAdmin";
-import { getActivityList } from "@/api/activity";
-import { getMyClubs } from "@/api/club";
+import { ref, onMounted } from "vue";
+import { useActivityList } from "@/composables/useActivityList";
+import { useActivityForm } from "@/composables/useActivityForm";
+import { useActivitySignups } from "@/composables/useActivitySignups";
 import {
   getActivityStatusType,
   getActivityStatusText,
@@ -231,247 +247,91 @@ import {
   getSignupStatusType,
   getSignupStatusText,
   canCheckin,
-  CheckinAction,
 } from "@/constants/signup";
 
-const loading = ref(false);
-const tableData = ref([]);
-const currentClubId = ref(null);
-const pagination = reactive({
-  pageNum: 1,
-  pageSize: 10,
-  total: 0,
-});
+// 活动列表管理
+const {
+  loading,
+  tableData,
+  currentClubId,
+  pagination,
+  initClub,
+  loadData,
+  handleCancel,
+} = useActivityList();
 
-const dialogVisible = ref(false);
-const dialogTitle = ref("创建活动");
-const formRef = ref(null);
-const submitting = ref(false);
+// 活动表单管理（含草稿功能）
+const {
+  dialogVisible,
+  dialogTitle,
+  formRef,
+  submitting,
+  form,
+  formRules,
+  hasDraft,
+  handleCreate,
+  handleEdit,
+  handleSubmit,
+  handleClearDraft,
+  handleShowDraftInfo,
+} = useActivityForm(currentClubId, loadData);
+
+// 报名列表管理
+const {
+  signupDialogVisible,
+  signupLoading,
+  signupData,
+  signupPagination,
+  handleSignups,
+  handleCheckin,
+  loadSignups,
+} = useActivitySignups();
+
+// 查看详情（职责单一，保留在组件中）
 const viewDialogVisible = ref(false);
 const viewActivity = ref(null);
-const form = reactive({
-  id: null,
-  clubId: null,
-  title: "",
-  content: "",
-  location: "",
-  startTime: "",
-  endTime: "",
-  signupStartTime: "",
-  signupEndTime: "",
-  maxMembers: 50,
-});
-
-const formRules = {
-  title: [{ required: true, message: "请输入活动名称", trigger: "blur" }],
-  content: [{ required: true, message: "请输入活动内容", trigger: "blur" }],
-  location: [{ required: true, message: "请输入活动地点", trigger: "blur" }],
-  startTime: [{ required: true, message: "请选择开始时间", trigger: "change" }],
-  endTime: [{ required: true, message: "请选择结束时间", trigger: "change" }],
-  maxMembers: [{ required: true, message: "请输入人数上限", trigger: "blur" }],
-};
-
-const signupDialogVisible = ref(false);
-const signupLoading = ref(false);
-const signupData = ref([]);
-const currentActivity = ref(null);
-const signupPagination = reactive({
-  pageNum: 1,
-  pageSize: 10,
-  total: 0,
-});
-
-onMounted(async () => {
-  await initClub();
-  loadData();
-});
-
-const initClub = async () => {
-  try {
-    const clubs = await getMyClubs();
-    if (clubs && clubs.length > 0) {
-      const club = clubs.find((c) => c.role === "LEADER") || clubs[0];
-      currentClubId.value = club.id;
-    }
-  } catch (error) {
-    console.error("获取社团信息失败:", error);
-    ElMessage.error("获取社团信息失败");
-  }
-};
-
-const loadData = async () => {
-  if (!currentClubId.value) return;
-
-  loading.value = true;
-  try {
-    const data = await getActivityList({
-      clubId: currentClubId.value,
-      pageNum: pagination.pageNum,
-      pageSize: pagination.pageSize,
-    });
-    tableData.value = data.records || [];
-    pagination.total = data.total || 0;
-  } catch (error) {
-    console.error("加载活动列表失败:", error);
-    ElMessage.error("加载活动列表失败");
-  } finally {
-    loading.value = false;
-  }
-};
-
-const loadSignups = async () => {
-  if (!currentActivity.value) return;
-
-  signupLoading.value = true;
-  try {
-    const data = await getActivitySignups(currentActivity.value.id, {
-      pageNum: signupPagination.pageNum,
-      pageSize: signupPagination.pageSize,
-    });
-    signupData.value = data.records || [];
-    signupPagination.total = data.total || 0;
-  } catch (error) {
-    console.error("加载报名列表失败:", error);
-    ElMessage.error("加载报名列表失败");
-  } finally {
-    signupLoading.value = false;
-  }
-};
-
-const handleCreate = () => {
-  dialogTitle.value = "创建活动";
-  Object.assign(form, {
-    id: null,
-    clubId: currentClubId.value,
-    title: "",
-    content: "",
-    location: "",
-    startTime: "",
-    endTime: "",
-    signupStartTime: "",
-    signupEndTime: "",
-    maxMembers: 50,
-  });
-  dialogVisible.value = true;
-};
 
 const handleView = (row) => {
   viewActivity.value = row;
   viewDialogVisible.value = true;
 };
 
-const handleEdit = (row) => {
-  dialogTitle.value = "编辑活动";
-  Object.assign(form, {
-    id: row.id,
-    clubId: row.clubId,
-    title: row.title,
-    content: row.content,
-    location: row.location,
-    startTime: row.startTime,
-    endTime: row.endTime,
-    signupStartTime: row.signupStartTime,
-    signupEndTime: row.signupEndTime,
-    maxMembers: row.maxMembers,
-  });
-  dialogVisible.value = true;
-};
-
-const handleSignups = (row) => {
-  currentActivity.value = row;
-  signupPagination.pageNum = 1;
-  signupDialogVisible.value = true;
-  loadSignups();
-};
-
-const handleCancel = async (row) => {
-  try {
-    await ElMessageBox.confirm(`确定要取消活动"${row.title}"吗？`, "警告", {
-      confirmButtonText: "确定",
-      cancelButtonText: "取消",
-      type: "warning",
-    });
-
-    await cancelActivity(row.id);
-    ElMessage.success("取消成功");
-    loadData();
-  } catch (error) {
-    if (error !== "cancel") {
-      console.error("取消失败:", error);
-      ElMessage.error("取消失败");
-    }
-  }
-};
-
-const handleSubmit = async () => {
-  try {
-    await formRef.value.validate();
-    submitting.value = true;
-
-    if (form.id) {
-      await updateActivity(form.id, {
-        title: form.title,
-        content: form.content,
-        location: form.location,
-        startTime: form.startTime,
-        endTime: form.endTime,
-        signupStartTime: form.signupStartTime,
-        signupEndTime: form.signupEndTime,
-        maxMembers: form.maxMembers,
-      });
-      ElMessage.success("更新成功");
-    } else {
-      await createActivity({
-        clubId: form.clubId,
-        title: form.title,
-        content: form.content,
-        location: form.location,
-        startTime: form.startTime,
-        endTime: form.endTime,
-        signupStartTime: form.signupStartTime,
-        signupEndTime: form.signupEndTime,
-        maxMembers: form.maxMembers,
-      });
-      ElMessage.success("创建成功");
-    }
-
-    dialogVisible.value = false;
-    loadData();
-  } catch (error) {
-    console.error("提交失败:", error);
-    ElMessage.error("操作失败");
-  } finally {
-    submitting.value = false;
-  }
-};
-
-const handleCheckin = async (row, status) => {
-  try {
-    const action =
-      status === "PRESENT" ? CheckinAction.CHECK_IN : CheckinAction.ABSENT;
-    await checkinActivity(currentActivity.value.id, {
-      userIds: [row.userId],
-      action: action,
-    });
-    ElMessage.success(status === "PRESENT" ? "签到成功" : "已标记缺席");
-    loadSignups();
-  } catch (error) {
-    console.error("操作失败:", error);
-    ElMessage.error("操作失败");
-  }
-};
+onMounted(async () => {
+  await initClub();
+  loadData();
+});
 </script>
 
 <style scoped lang="scss">
 .activity-manage {
   .action-card {
     margin-bottom: 20px;
+
+    display: flex;
+    gap: 10px;
+    align-items: center;
   }
 
   .pagination {
     margin-top: 20px;
     display: flex;
     justify-content: flex-end;
+  }
+
+  .dialog-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+
+    .footer-left {
+      flex: 1;
+    }
+
+    .footer-right {
+      display: flex;
+      gap: 10px;
+    }
   }
 }
 </style>

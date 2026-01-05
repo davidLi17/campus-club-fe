@@ -93,6 +93,10 @@ router.beforeEach((to, from, next) => {
   const token = getToken();
   const userStore = useUserStore();
 
+  // 设置页面标题
+  const title = (to.meta.title || to.name || "校园社团管理") + " - 校园社团";
+  document.title = title;
+
   // 需要登录的页面
   if (to.meta.requiresAuth !== false) {
     if (!token) {

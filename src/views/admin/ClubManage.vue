@@ -40,6 +40,25 @@
         style="width: 100%"
       >
         <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column label="社团风采" width="100" align="center">
+          <template #default="{ row }">
+            <el-image
+              v-if="row.logo"
+              :src="row.logo"
+              fit="cover"
+              style="width: 60px; height: 60px; border-radius: 4px"
+              :preview-src-list="[row.logo]"
+              preview-teleported
+            >
+              <template #error>
+                <div class="image-slot">
+                  <el-icon><Picture /></el-icon>
+                </div>
+              </template>
+            </el-image>
+            <span v-else class="no-logo">未设置</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="name" label="社团名称" min-width="150" />
         <el-table-column
           prop="description"
@@ -193,7 +212,7 @@
         <el-descriptions-item label="创建时间">
           {{ viewClub?.createTime }}
         </el-descriptions-item>
-        <el-descriptions-item label="Logo" :span="2">
+        <el-descriptions-item label="社团风采" :span="2">
           <el-image
             v-if="viewClub?.logo"
             :src="viewClub.logo"
@@ -231,6 +250,7 @@ import {
   getClubMemberRoleType,
   getClubMemberRoleText,
 } from "@/constants/club";
+import { Search, Refresh, Plus, Picture } from "@element-plus/icons-vue";
 
 const loading = ref(false);
 const tableData = ref([]);
@@ -467,6 +487,23 @@ const handleRemoveLeader = async (row) => {
       margin-top: 20px;
       display: flex;
       justify-content: flex-end;
+    }
+
+    .image-slot {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 60px;
+      height: 60px;
+      background: var(--el-fill-color-light);
+      color: var(--el-text-color-secondary);
+      font-size: 20px;
+      border-radius: 4px;
+    }
+
+    .no-logo {
+      color: var(--el-text-color-placeholder);
+      font-size: 12px;
     }
   }
 }

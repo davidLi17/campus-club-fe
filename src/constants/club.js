@@ -11,8 +11,8 @@ export const ClubStatus = {
 
 // 社团成员角色
 export const ClubMemberRole = {
-  LEADER: "LEADER",
-  MEMBER: "MEMBER",
+  LEADER: "leader",
+  MEMBER: "member",
 };
 
 /**
@@ -21,13 +21,12 @@ export const ClubMemberRole = {
  * @returns {string} Element Plus Tag 类型
  */
 export function getClubStatusType(status) {
-  const s = status?.toLowerCase?.() || status;
   const map = {
     [ClubStatus.NORMAL]: "success",
     [ClubStatus.DISABLED]: "info",
     [ClubStatus.PENDING]: "warning",
   };
-  return map[s] || "info";
+  return map[status] || "info";
 }
 
 /**
@@ -36,13 +35,12 @@ export function getClubStatusType(status) {
  * @returns {string} 状态文本
  */
 export function getClubStatusText(status) {
-  const s = status?.toLowerCase?.() || status;
   const map = {
     [ClubStatus.NORMAL]: "正常",
     [ClubStatus.DISABLED]: "停用",
     [ClubStatus.PENDING]: "待审核",
   };
-  return map[s] || "未知";
+  return map[status] || "未知";
 }
 
 /**
@@ -51,7 +49,7 @@ export function getClubStatusText(status) {
  * @returns {boolean}
  */
 export function isClubNormal(status) {
-  return status?.toLowerCase?.() === ClubStatus.NORMAL;
+  return status === ClubStatus.NORMAL;
 }
 
 /**
@@ -60,7 +58,7 @@ export function isClubNormal(status) {
  * @returns {boolean}
  */
 export function isClubPending(status) {
-  return status?.toLowerCase?.() === ClubStatus.PENDING;
+  return status === ClubStatus.PENDING;
 }
 
 /**
