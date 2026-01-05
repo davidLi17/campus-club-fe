@@ -100,7 +100,7 @@ const handleLogin = async () => {
       <div class="tips">
         <p>测试账号：</p>
         <p>系统管理员: admin / 123456</p>
-        <p>社团管理员: clubadmin / 123456</p>
+        <p>社团管理员: club_admin / 123456</p>
       </div>
     </el-card>
   </div>

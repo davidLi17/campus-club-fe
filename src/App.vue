@@ -5,14 +5,12 @@
 </template>
 
 <style>
-/* 全局样式刷新数据 */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-/* 滚动条样式 */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
