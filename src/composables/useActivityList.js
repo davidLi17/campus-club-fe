@@ -1,38 +1,24 @@
-import { ref, reactive } from "vue";
+import { ref, reactive, watch } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { getActivityList } from "@/api/activity";
-import { getMyClubs } from "@/api/club";
 import { cancelActivity } from "@/api/clubAdmin";
+import { useClubSelector } from "./useClubSelector";
 
 /**
  * 活动列表管理 Hook
- * 职责：活动列表数据加载、分页、社团初始化、活动取消
+ * 职责：活动列表数据加载、分页、活动取消
  */
 export function useActivityList() {
   const loading = ref(false);
   const tableData = ref([]);
-  const currentClubId = ref(null);
   const pagination = reactive({
     pageNum: 1,
     pageSize: 10,
     total: 0,
   });
 
-  /**
-   * 初始化社团信息
-   */
-  const initClub = async () => {
-    try {
-      const clubs = await getMyClubs();
-      if (clubs && clubs.length > 0) {
-        const club = clubs.find((c) => c.role === "LEADER") || clubs[0];
-        currentClubId.value = club.id;
-      }
-    } catch (error) {
-      console.error("获取社团信息失败:", error);
-      ElMessage.error("获取社团信息失败");
-    }
-  };
+  // 使用共享的社团选择器
+  const { currentClubId, initIfNeeded } = useClubSelector();
 
   /**
    * 加载活动列表
@@ -79,12 +65,22 @@ export function useActivityList() {
     }
   };
 
+  /**
+   * 监听社团切换，自动刷新数据
+   */
+  watch(currentClubId, (newId, oldId) => {
+    if (newId && newId !== oldId) {
+      pagination.pageNum = 1;
+      loadData();
+    }
+  });
+
   return {
     loading,
     tableData,
     currentClubId,
     pagination,
-    initClub,
+    initIfNeeded,
     loadData,
     handleCancel,
   };

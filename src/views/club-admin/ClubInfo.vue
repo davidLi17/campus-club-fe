@@ -57,14 +57,15 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onMounted, watch } from "vue";
 import { ElMessage } from "element-plus";
 import { updateClubInfo } from "@/api/clubAdmin";
-import { getMyClubs } from "@/api/club";
-import { useUserStore } from "@/stores/user";
+import { useClubSelector } from "@/composables/useClubSelector";
 import { getClubStatusType, getClubStatusText } from "@/constants/club";
 
-const userStore = useUserStore();
+// 使用共享的社团选择器
+const { currentClub, currentClubId, initIfNeeded } = useClubSelector();
+
 const clubInfo = ref({
   id: null,
   name: "",
@@ -89,20 +90,20 @@ const formRules = {
 };
 
 onMounted(async () => {
-  await loadClubInfo();
+  await initIfNeeded();
+  loadClubInfo();
 });
 
-const loadClubInfo = async () => {
-  try {
-    const clubs = await getMyClubs();
-    if (clubs && clubs.length > 0) {
-      // 假设社团管理员只管理一个社团，或者取第一个
-      const club = clubs.find((c) => c.role === "LEADER") || clubs[0];
-      clubInfo.value = club;
-    }
-  } catch (error) {
-    console.error("加载社团信息失败:", error);
-    ElMessage.error("加载社团信息失败");
+// 监听社团切换，自动刷新数据
+watch(currentClubId, (newId, oldId) => {
+  if (newId && newId !== oldId) {
+    loadClubInfo();
+  }
+});
+
+const loadClubInfo = () => {
+  if (currentClub.value) {
+    clubInfo.value = { ...currentClub.value };
   }
 };
 

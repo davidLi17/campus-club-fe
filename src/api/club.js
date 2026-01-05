@@ -34,6 +34,14 @@ export function getMyClubs() {
   });
 }
 
+// 查询我管理的社团列表（社团管理员使用）
+export function getManagedClubs() {
+  return request({
+    url: "/club/management/clubs",
+    method: "get",
+  });
+}
+
 // 申请加入社团
 export function applyJoinClub(data) {
   return request({

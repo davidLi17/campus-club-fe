@@ -76,7 +76,7 @@
       <el-form :model="reviewForm" label-width="100px">
         <el-form-item label="审核意见">
           <el-input
-            v-model="reviewForm.note"
+            v-model="reviewForm.reviewNote"
             type="textarea"
             :rows="4"
             placeholder="请输入审核意见（选填）"
@@ -98,29 +98,28 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onMounted, watch } from "vue";
 import { ElMessage } from "element-plus";
 import {
   getClubPendingApplications,
   reviewClubApplication,
 } from "@/api/clubAdmin";
-import { getClubMembers, getMyClubs } from "@/api/club";
+import { getClubMembers } from "@/api/club";
+import { useClubSelector } from "@/composables/useClubSelector";
 import {
   getApplicationStatusType,
   getApplicationStatusText,
   isApplicationPending,
 } from "@/constants/application";
-import {
-  isClubLeader,
-  getClubMemberRoleType,
-  getClubMemberRoleText,
-} from "@/constants/club";
+import { getClubMemberRoleType, getClubMemberRoleText } from "@/constants/club";
+
+// 使用共享的社团选择器
+const { currentClubId, initIfNeeded } = useClubSelector();
 
 const activeTab = ref("members");
 const loading = ref(false);
 const memberData = ref([]);
 const applicationData = ref([]);
-const currentClubId = ref(null);
 const pagination = reactive({
   pageNum: 1,
   pageSize: 10,
@@ -131,28 +130,27 @@ const reviewDialogVisible = ref(false);
 const reviewTitle = ref("");
 const reviewForm = reactive({
   applicationId: null,
-  approved: true,
-  note: "",
+  status: "approved", // "approved" | "rejected"
+  reviewNote: "",
 });
 const submitting = ref(false);
 
 onMounted(async () => {
-  await initClub();
+  await initIfNeeded();
   loadMembers();
 });
 
-const initClub = async () => {
-  try {
-    const clubs = await getMyClubs();
-    if (clubs && clubs.length > 0) {
-      const club = clubs.find((c) => c.role === "LEADER") || clubs[0];
-      currentClubId.value = club.id;
+// 监听社团切换，自动刷新数据
+watch(currentClubId, (newId, oldId) => {
+  if (newId && newId !== oldId) {
+    pagination.pageNum = 1;
+    if (activeTab.value === "members") {
+      loadMembers();
+    } else {
+      loadApplications();
     }
-  } catch (error) {
-    console.error("获取社团信息失败:", error);
-    ElMessage.error("获取社团信息失败");
   }
-};
+});
 
 const loadMembers = async () => {
   if (!currentClubId.value) return;
@@ -201,16 +199,16 @@ const handleTabChange = (tab) => {
 const handleApprove = (row) => {
   reviewTitle.value = "通过申请";
   reviewForm.applicationId = row.id;
-  reviewForm.approved = true;
-  reviewForm.note = "";
+  reviewForm.status = "approved";
+  reviewForm.reviewNote = "";
   reviewDialogVisible.value = true;
 };
 
 const handleReject = (row) => {
   reviewTitle.value = "拒绝申请";
   reviewForm.applicationId = row.id;
-  reviewForm.approved = false;
-  reviewForm.note = "";
+  reviewForm.status = "rejected";
+  reviewForm.reviewNote = "";
   reviewDialogVisible.value = true;
 };
 
@@ -221,8 +219,8 @@ const handleReviewSubmit = async () => {
     submitting.value = true;
     await reviewClubApplication(currentClubId.value, {
       applicationId: reviewForm.applicationId,
-      approved: reviewForm.approved,
-      note: reviewForm.note,
+      status: reviewForm.status, // "approved" | "rejected"
+      reviewNote: reviewForm.reviewNote,
     });
     ElMessage.success("审核成功");
     reviewDialogVisible.value = false;

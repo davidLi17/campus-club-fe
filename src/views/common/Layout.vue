@@ -1,19 +1,44 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessageBox } from "element-plus";
 import { useUserStore } from "@/stores/user";
 import { getUserRoleText } from "@/constants/user";
+import { useClubSelector } from "@/composables/useClubSelector";
 
 const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
+
+// 社团选择器
+const {
+  managedClubs,
+  currentClubId,
+  loading: clubLoading,
+  initIfNeeded,
+  selectClub,
+} = useClubSelector();
 
 const collapsed = ref(false);
 
 const activeMenu = computed(() => route.path);
 
 const roleText = computed(() => getUserRoleText(userStore.role));
+
+// 是否在社团管理页面
+const isClubAdminPage = computed(() => route.path.startsWith("/club-admin"));
+
+// 初始化社团选择器（社团管理员）
+onMounted(async () => {
+  if (userStore.isClubAdmin) {
+    await initIfNeeded();
+  }
+});
+
+// 社团切换处理
+const handleClubChange = (clubId) => {
+  selectClub(clubId);
+};
 
 const handleCommand = async (command) => {
   if (command === "logout") {
@@ -76,6 +101,23 @@ const handleCommand = async (command) => {
 
         <!-- 社团管理员菜单 -->
         <template v-if="userStore.isClubAdmin">
+          <!-- 社团选择器 -->
+          <div v-if="!collapsed" class="club-selector">
+            <el-select
+              :model-value="currentClubId"
+              placeholder="选择社团"
+              size="small"
+              :loading="clubLoading"
+              @change="handleClubChange"
+            >
+              <el-option
+                v-for="club in managedClubs"
+                :key="club.id"
+                :label="club.name"
+                :value="club.id"
+              />
+            </el-select>
+          </div>
           <el-sub-menu index="club-admin">
             <template #title>
               <el-icon><Management /></el-icon>
@@ -185,6 +227,28 @@ const handleCommand = async (command) => {
 
     &:not(.el-menu--collapse) {
       width: 220px;
+    }
+  }
+
+  .club-selector {
+    padding: 10px 15px;
+    border-bottom: 1px solid #1f2d3d;
+
+    :deep(.el-select) {
+      width: 100%;
+
+      .el-input__wrapper {
+        background-color: #1f2d3d;
+        box-shadow: none;
+      }
+
+      .el-input__inner {
+        color: #bfcbd9;
+      }
+
+      .el-select__caret {
+        color: #bfcbd9;
+      }
     }
   }
 }

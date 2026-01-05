@@ -255,7 +255,7 @@ const {
   tableData,
   currentClubId,
   pagination,
-  initClub,
+  initIfNeeded,
   loadData,
   handleCancel,
 } = useActivityList();
@@ -297,7 +297,7 @@ const handleView = (row) => {
 };
 
 onMounted(async () => {
-  await initClub();
+  await initIfNeeded();
   loadData();
 });
 </script>
