@@ -16,7 +16,7 @@
           clubInfo.memberCount
         }}</el-descriptions-item>
         <el-descriptions-item label="创建时间">{{
-          clubInfo.createTime
+          formatDateTime(clubInfo.createTime)
         }}</el-descriptions-item>
         <el-descriptions-item label="状态">
           <el-tag :type="getClubStatusType(clubInfo.status)">
@@ -29,7 +29,7 @@
       </el-descriptions>
     </el-card>
 
-    <el-dialog v-model="dialogVisible" title="编辑社团信息" width="600px">
+    <el-dialog v-model="dialogVisible" title="编辑社团信息" width="900px">
       <el-form
         ref="formRef"
         :model="form"
@@ -62,6 +62,7 @@ import { ElMessage } from "element-plus";
 import { updateClubInfo } from "@/api/clubAdmin";
 import { useClubSelector } from "@/composables/useClubSelector";
 import { getClubStatusType, getClubStatusText } from "@/constants/club";
+import { formatDateTime } from "@/utils/date";
 
 // 使用共享的社团选择器
 const { currentClub, currentClubId, initIfNeeded } = useClubSelector();

@@ -16,7 +16,11 @@
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="title" label="活动名称" min-width="180" />
         <el-table-column prop="location" label="地点" width="150" />
-        <el-table-column prop="startTime" label="开始时间" width="180" />
+        <el-table-column prop="startTime" label="开始时间" width="180">
+          <template #default="{ row }">
+            {{ formatDateTime(row.startTime) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="currentMembers" label="报名/上限" width="120">
           <template #default="{ row }">
             {{ row.currentMembers }} / {{ row.maxMembers }}
@@ -58,7 +62,7 @@
     </el-card>
 
     <!-- 创建/编辑对话框 -->
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="700px">
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="900px">
       <el-form
         ref="formRef"
         :model="form"
@@ -142,7 +146,7 @@
     </el-dialog>
 
     <!-- 报名列表对话框 -->
-    <el-dialog v-model="signupDialogVisible" title="报名列表" width="900px">
+    <el-dialog v-model="signupDialogVisible" title="报名列表" width="1200px">
       <el-table v-loading="signupLoading" :data="signupData" border>
         <el-table-column prop="userId" label="用户ID" width="100" />
         <el-table-column prop="username" label="用户名" width="150" />
@@ -191,7 +195,7 @@
     </el-dialog>
 
     <!-- 查看详情对话框 -->
-    <el-dialog v-model="viewDialogVisible" title="活动详情" width="700px">
+    <el-dialog v-model="viewDialogVisible" title="活动详情" width="900px">
       <el-descriptions :column="2" border>
         <el-descriptions-item label="活动名称" :span="2">
           {{ viewActivity?.title }}
@@ -205,23 +209,23 @@
           </el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="开始时间">
-          {{ viewActivity?.startTime }}
+          {{ formatDateTime(viewActivity?.startTime) }}
         </el-descriptions-item>
         <el-descriptions-item label="结束时间">
-          {{ viewActivity?.endTime }}
+          {{ formatDateTime(viewActivity?.endTime) }}
         </el-descriptions-item>
         <el-descriptions-item label="报名开始时间">
-          {{ viewActivity?.signupStartTime || "未设置" }}
+          {{ viewActivity?.signupStartTime ? formatDateTime(viewActivity.signupStartTime) : "未设置" }}
         </el-descriptions-item>
         <el-descriptions-item label="报名结束时间">
-          {{ viewActivity?.signupEndTime || "未设置" }}
+          {{ viewActivity?.signupEndTime ? formatDateTime(viewActivity.signupEndTime) : "未设置" }}
         </el-descriptions-item>
         <el-descriptions-item label="报名人数">
           {{ viewActivity?.currentMembers }} /
           {{ viewActivity?.maxMembers || "不限" }}
         </el-descriptions-item>
         <el-descriptions-item label="创建时间">
-          {{ viewActivity?.createTime }}
+          {{ formatDateTime(viewActivity?.createTime) }}
         </el-descriptions-item>
         <el-descriptions-item label="活动内容" :span="2">
           <div style="white-space: pre-wrap">{{ viewActivity?.content }}</div>
@@ -248,6 +252,7 @@ import {
   getSignupStatusText,
   canCheckin,
 } from "@/constants/signup";
+import { formatDateTime } from "@/utils/date";
 
 // 活动列表管理
 const {

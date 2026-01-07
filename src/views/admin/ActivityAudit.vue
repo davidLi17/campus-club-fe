@@ -44,7 +44,11 @@
         <el-table-column prop="title" label="活动名称" min-width="180" />
         <el-table-column prop="clubName" label="所属社团" width="150" />
         <el-table-column prop="location" label="活动地点" width="150" />
-        <el-table-column prop="startTime" label="开始时间" width="180" />
+        <el-table-column prop="startTime" label="开始时间" width="180">
+          <template #default="{ row }">
+            {{ formatDateTime(row.startTime) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="currentMembers" label="报名/上限" width="120">
           <template #default="{ row }">
             {{ row.currentMembers }} / {{ row.maxMembers }}
@@ -97,7 +101,7 @@
     </el-card>
 
     <!-- 审核对话框 -->
-    <el-dialog v-model="reviewDialogVisible" :title="reviewTitle" width="500px">
+    <el-dialog v-model="reviewDialogVisible" :title="reviewTitle" width="900px">
       <el-form :model="reviewForm" label-width="100px">
         <el-form-item label="审核意见">
           <el-input
@@ -121,7 +125,7 @@
     </el-dialog>
 
     <!-- 查看详情对话框 -->
-    <el-dialog v-model="viewDialogVisible" title="活动详情" width="700px">
+    <el-dialog v-model="viewDialogVisible" title="活动详情" width="900px">
       <el-descriptions :column="2" border>
         <el-descriptions-item label="活动ID">
           {{ viewActivity?.id }}
@@ -145,10 +149,10 @@
           {{ viewActivity?.maxMembers || "不限" }}
         </el-descriptions-item>
         <el-descriptions-item label="开始时间">
-          {{ viewActivity?.startTime }}
+          {{ formatDateTime(viewActivity?.startTime) }}
         </el-descriptions-item>
         <el-descriptions-item label="结束时间">
-          {{ viewActivity?.endTime }}
+          {{ formatDateTime(viewActivity?.endTime) }}
         </el-descriptions-item>
         <el-descriptions-item label="活动内容" :span="2">
           <div style="white-space: pre-wrap">{{ viewActivity?.content }}</div>
@@ -175,6 +179,7 @@ import {
   isActivityPending,
   ActivityStatus,
 } from "@/constants/activity";
+import { formatDateTime } from "@/utils/date";
 
 const loading = ref(false);
 const tableData = ref([]);

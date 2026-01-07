@@ -75,7 +75,11 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="创建时间" width="180" />
+        <el-table-column prop="createTime" label="创建时间" width="180">
+          <template #default="{ row }">
+            {{ formatDateTime(row.createTime) }}
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="280" fixed="right">
           <template #default="{ row }">
             <el-button size="small" @click="handleView(row)"> 查看 </el-button>
@@ -109,7 +113,7 @@
     <el-dialog
       v-model="dialogVisible"
       :title="dialogTitle"
-      width="600px"
+      width="900px"
       @close="handleDialogClose"
     >
       <el-form
@@ -154,7 +158,11 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="joinTime" label="加入时间" width="180" />
+        <el-table-column prop="joinTime" label="加入时间" width="180">
+          <template #default="{ row }">
+            {{ formatDateTime(row.joinTime) }}
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="200">
           <template #default="{ row }">
             <el-button
@@ -190,7 +198,7 @@
     </el-dialog>
 
     <!-- 查看详情对话框 -->
-    <el-dialog v-model="viewDialogVisible" title="社团详情" width="700px">
+    <el-dialog v-model="viewDialogVisible" title="社团详情" width="900px">
       <el-descriptions :column="2" border>
         <el-descriptions-item label="社团ID">
           {{ viewClub?.id }}
@@ -210,7 +218,7 @@
           </el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="创建时间">
-          {{ viewClub?.createTime }}
+          {{ formatDateTime(viewClub?.createTime) }}
         </el-descriptions-item>
         <el-descriptions-item label="社团风采" :span="2">
           <el-image
@@ -251,6 +259,7 @@ import {
   getClubMemberRoleText,
 } from "@/constants/club";
 import { Search, Refresh, Plus, Picture } from "@element-plus/icons-vue";
+import { formatDateTime } from "@/utils/date";
 
 const loading = ref(false);
 const tableData = ref([]);

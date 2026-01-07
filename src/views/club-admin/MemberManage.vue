@@ -7,7 +7,6 @@
             <el-table-column prop="userId" label="用户ID" width="100" />
             <el-table-column prop="username" label="用户名" width="150" />
             <el-table-column prop="realName" label="真实姓名" width="150" />
-            <el-table-column prop="studentId" label="学号" width="150" />
             <el-table-column prop="role" label="角色" width="120">
               <template #default="{ row }">
                 <el-tag :type="getClubMemberRoleType(row.role)">
@@ -15,7 +14,11 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="joinTime" label="加入时间" width="180" />
+            <el-table-column prop="joinTime" label="加入时间" width="180">
+              <template #default="{ row }">
+                {{ formatDateTime(row.joinTime) }}
+              </template>
+            </el-table-column>
           </el-table>
         </el-card>
       </el-tab-pane>
@@ -25,9 +28,12 @@
           <el-table v-loading="loading" :data="applicationData" border>
             <el-table-column prop="id" label="申请ID" width="100" />
             <el-table-column prop="realName" label="申请人" width="150" />
-            <el-table-column prop="studentId" label="学号" width="150" />
             <el-table-column prop="reason" label="申请理由" min-width="200" />
-            <el-table-column prop="createTime" label="申请时间" width="180" />
+            <el-table-column prop="createTime" label="申请时间" width="180">
+              <template #default="{ row }">
+                {{ formatDateTime(row.createTime) }}
+              </template>
+            </el-table-column>
             <el-table-column prop="status" label="状态" width="100">
               <template #default="{ row }">
                 <el-tag :type="getApplicationStatusType(row.status)">
@@ -72,7 +78,7 @@
     </el-tabs>
 
     <!-- 审核对话框 -->
-    <el-dialog v-model="reviewDialogVisible" :title="reviewTitle" width="500px">
+    <el-dialog v-model="reviewDialogVisible" :title="reviewTitle" width="900px">
       <el-form :model="reviewForm" label-width="100px">
         <el-form-item label="审核意见">
           <el-input
@@ -112,6 +118,7 @@ import {
   isApplicationPending,
 } from "@/constants/application";
 import { getClubMemberRoleType, getClubMemberRoleText } from "@/constants/club";
+import { formatDateTime } from "@/utils/date";
 
 // 使用共享的社团选择器
 const { currentClubId, initIfNeeded } = useClubSelector();
