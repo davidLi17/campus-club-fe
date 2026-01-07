@@ -33,18 +33,24 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="320" fixed="right">
+        <el-table-column label="操作" width="380" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" @click="handleView(row)">查看</el-button>
-            <el-button size="small" type="primary" @click="handleEdit(row)"
-              >编辑</el-button
-            >
-            <el-button size="small" type="info" @click="handleSignups(row)"
-              >报名列表</el-button
-            >
-            <el-button size="small" type="danger" @click="handleCancel(row)"
-              >取消</el-button
-            >
+            <el-button size="small" @click="handleView(row)">
+              <el-icon><View /></el-icon>
+              查看
+            </el-button>
+            <el-button size="small" type="primary" @click="handleEdit(row)">
+              <el-icon><Edit /></el-icon>
+              编辑
+            </el-button>
+            <el-button size="small" type="success" @click="handleSignups(row)">
+              <el-icon><User /></el-icon>
+              报名列表
+            </el-button>
+            <el-button size="small" type="danger" @click="handleCancel(row)">
+              <el-icon><Delete /></el-icon>
+              取消
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -253,6 +259,7 @@ import {
   canCheckin,
 } from "@/constants/signup";
 import { formatDateTime } from "@/utils/date";
+import { View, Edit, User, Delete } from "@element-plus/icons-vue";
 
 // 活动列表管理
 const {
